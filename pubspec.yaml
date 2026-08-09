@@ -1,0 +1,83 @@
+name: vaxi_track
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # --------------------------
+  # State Management
+  # --------------------------
+  provider: ^6.1.5
+
+  # --------------------------
+  # Navigation
+  # --------------------------
+  go_router: ^16.0.0
+
+  # --------------------------
+  # UI & Fonts
+  # --------------------------
+  google_fonts: ^6.3.1
+  flutter_svg: ^2.2.0
+  intl: ^0.20.2
+
+  # --------------------------
+  # Local Storage
+  # --------------------------
+  shared_preferences: ^2.5.3
+
+  # --------------------------
+  # Network
+  # --------------------------
+  connectivity_plus: ^7.0.0
+
+  # --------------------------
+  # Loading Animations
+  # --------------------------
+  flutter_spinkit: ^5.2.2
+
+  # --------------------------
+  # Animations (Lottie)
+  # --------------------------
+  lottie: ^3.3.2
+  qr_flutter: ^4.1.0
+  fl_chart: ^0.71.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+    - assets/fonts/
+
+qr_flutter: ^4.1.0
+
+  # Uncomment later when custom fonts are added
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: assets/fonts/Poppins-Regular.ttf
+  #       - asset: assets/fonts/Poppins-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Poppins-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Poppins-Bold.ttf
+  #         weight: 700
