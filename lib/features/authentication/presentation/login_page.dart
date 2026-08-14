@@ -6,6 +6,9 @@ import '../../../core/widgets/primary_button.dart';
 import '../../../core/widgets/social_button.dart';
 import '../../../app/app_routes.dart';
 
+import '../models/user_model.dart';
+import '../services/auth_service.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -17,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController passwordController = TextEditingController();
 
   bool isLoading = false;
@@ -36,17 +38,33 @@ class _LoginPageState extends State<LoginPage> {
       isLoading = true;
     });
 
+    // Simulate login request
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    /*
+     * TEMPORARY USER
+     *
+     * Later this will come from Firebase/database.
+     */
+    const user = UserModel(
+      id: 'USR001',
+      name: 'Krish',
+      email: 'krish@gmail.com',
+      role: UserRole.admin,
+    );
+
+    // Save logged-in user
+    AuthService().login(user);
 
     setState(() {
       isLoading = false;
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Login Successful")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Login Successful - ${user.roleName}')),
+    );
 
     Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
   }
@@ -74,7 +92,6 @@ class _LoginPageState extends State<LoginPage> {
                     child: CircleAvatar(
                       radius: 45,
                       backgroundColor: AppColors.primary,
-
                       child: const Icon(
                         Icons.vaccines,
                         color: Colors.white,
@@ -112,7 +129,6 @@ class _LoginPageState extends State<LoginPage> {
                     hintText: "Enter your email",
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Please enter email";
@@ -130,15 +146,10 @@ class _LoginPageState extends State<LoginPage> {
 
                   CustomTextField(
                     controller: passwordController,
-
                     labelText: "Password",
-
                     hintText: "Enter your password",
-
                     prefixIcon: Icons.lock_outline,
-
                     isPassword: true,
-
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "Enter password";
@@ -156,12 +167,10 @@ class _LoginPageState extends State<LoginPage> {
 
                   Align(
                     alignment: Alignment.centerRight,
-
                     child: TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, AppRoutes.forgotPassword);
                       },
-
                       child: const Text("Forgot Password?"),
                     ),
                   ),
@@ -182,7 +191,6 @@ class _LoginPageState extends State<LoginPage> {
 
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 12),
-
                         child: Text("OR"),
                       ),
 
@@ -191,6 +199,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
 
                   const SizedBox(height: 25),
+
                   SocialButton(
                     text: "Continue with Google",
                     iconPath: "assets/icons/google logo.png",
@@ -222,6 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                         "Don't have an account?",
                         style: TextStyle(fontSize: 15),
                       ),
+
                       TextButton(
                         onPressed: () {
                           Navigator.pushNamed(context, AppRoutes.signup);
