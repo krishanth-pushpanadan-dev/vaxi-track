@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_colors.dart';
 import '../../app/app_routes.dart';
-import '../../features/authentication/models/user_model.dart';
 import '../../features/authentication/models/role_permissions.dart';
 import '../../features/authentication/services/auth_service.dart';
 
@@ -14,6 +13,10 @@ class AppDrawer extends StatelessWidget {
     final authService = AuthService();
     final user = authService.currentUser;
 
+    // ==============================================================
+    // USER NOT LOGGED IN
+    // ==============================================================
+
     if (user == null) {
       return const Drawer(child: Center(child: Text("User not logged in")));
     }
@@ -24,17 +27,21 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            // =====================================================
+            // ========================================================
             // HEADER
-            // =====================================================
+            // ========================================================
             Container(
               width: double.infinity,
+
               padding: const EdgeInsets.fromLTRB(20, 25, 20, 25),
+
               decoration: const BoxDecoration(
                 gradient: AppColors.primaryGradient,
               ),
+
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+
                 children: [
                   const CircleAvatar(
                     radius: 32,
@@ -71,10 +78,12 @@ class AppDrawer extends StatelessWidget {
                       horizontal: 12,
                       vertical: 6,
                     ),
+
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(.20),
+                      color: Colors.white.withValues(alpha: 0.20),
                       borderRadius: BorderRadius.circular(20),
                     ),
+
                     child: Text(
                       user.roleName,
                       style: const TextStyle(
@@ -88,16 +97,76 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
-            // =====================================================
+            // ========================================================
             // MENU
-            // =====================================================
+            // ========================================================
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 10),
+
                 children: [
-                  // -------------------------------------------------
+                  // ==================================================
+                  // DASHBOARD
+                  // ==================================================
+                  _drawerItem(
+                    context: context,
+                    icon: Icons.dashboard_rounded,
+                    title: "Dashboard",
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // ==================================================
+                  // DEVICES
+                  //
+                  // IMPORTANT:
+                  // Pharmacist can see Devices because this permission
+                  // is controlled by RolePermissions.canViewDevices().
+                  // ==================================================
+                  if (RolePermissions.canViewDevices(role))
+                    _drawerItem(
+                      context: context,
+                      icon: Icons.memory_rounded,
+                      title: "Devices",
+                      onTap: () {
+                        Navigator.pop(context);
+
+                        Navigator.pushNamed(context, AppRoutes.devices);
+                      },
+                    ),
+
+                  // ==================================================
+                  // VACCINE BATCHES
+                  // ==================================================
+                  _drawerItem(
+                    context: context,
+                    icon: Icons.vaccines_rounded,
+                    title: "Vaccine Batches",
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.pushNamed(context, AppRoutes.batches);
+                    },
+                  ),
+
+                  // ==================================================
+                  // ALERTS
+                  // ==================================================
+                  _drawerItem(
+                    context: context,
+                    icon: Icons.notifications_active_rounded,
+                    title: "Alerts",
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.pushNamed(context, AppRoutes.alerts);
+                    },
+                  ),
+
+                  // ==================================================
                   // INVENTORY
-                  // -------------------------------------------------
+                  // ==================================================
                   if (RolePermissions.canViewInventory(role))
                     _drawerItem(
                       context: context,
@@ -110,9 +179,9 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
 
-                  // -------------------------------------------------
+                  // ==================================================
                   // ORDER REQUESTS
-                  // -------------------------------------------------
+                  // ==================================================
                   if (RolePermissions.canViewOrderRequests(role))
                     _drawerItem(
                       context: context,
@@ -125,9 +194,9 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
 
-                  // -------------------------------------------------
+                  // ==================================================
                   // WASTE MANAGEMENT
-                  // -------------------------------------------------
+                  // ==================================================
                   if (RolePermissions.canViewWaste(role))
                     _drawerItem(
                       context: context,
@@ -140,9 +209,9 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
 
-                  // -------------------------------------------------
+                  // ==================================================
                   // MAINTENANCE
-                  // -------------------------------------------------
+                  // ==================================================
                   if (RolePermissions.canViewMaintenance(role))
                     _drawerItem(
                       context: context,
@@ -155,9 +224,9 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
 
-                  // -------------------------------------------------
+                  // ==================================================
                   // REPORTS
-                  // -------------------------------------------------
+                  // ==================================================
                   if (RolePermissions.canViewReports(role))
                     _drawerItem(
                       context: context,
@@ -170,10 +239,11 @@ class AppDrawer extends StatelessWidget {
                       },
                     ),
 
-                  // -------------------------------------------------
+                  // ==================================================
                   // USER MANAGEMENT
-                  // ADMIN ONLY
-                  // -------------------------------------------------
+                  //
+                  // Normally Admin only through RolePermissions.
+                  // ==================================================
                   if (RolePermissions.canManageUsers(role))
                     _drawerItem(
                       context: context,
@@ -188,9 +258,9 @@ class AppDrawer extends StatelessWidget {
 
                   const Divider(height: 30, indent: 18, endIndent: 18),
 
-                  // -------------------------------------------------
+                  // ==================================================
                   // SETTINGS
-                  // -------------------------------------------------
+                  // ==================================================
                   if (RolePermissions.canAccessSettings(role))
                     _drawerItem(
                       context: context,
@@ -206,18 +276,21 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
-            // =====================================================
+            // ========================================================
             // LOGOUT
-            // =====================================================
+            // ========================================================
             const Divider(height: 1),
 
             Padding(
               padding: const EdgeInsets.all(12),
+
               child: ListTile(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
+
                 leading: const Icon(Icons.logout_rounded, color: Colors.red),
+
                 title: const Text(
                   "Logout",
                   style: TextStyle(
@@ -225,6 +298,7 @@ class AppDrawer extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+
                 onTap: () {
                   _logout(context);
                 },
@@ -236,9 +310,9 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  // ===============================================================
+  // ================================================================
   // DRAWER ITEM
-  // ===============================================================
+  // ================================================================
 
   Widget _drawerItem({
     required BuildContext context,
@@ -248,19 +322,23 @@ class AppDrawer extends StatelessWidget {
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 3),
+
       leading: Icon(icon, color: AppColors.primary),
+
       title: Text(
         title,
         style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
       ),
+
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+
       onTap: onTap,
     );
   }
 
-  // ===============================================================
+  // ================================================================
   // LOGOUT
-  // ===============================================================
+  // ================================================================
 
   void _logout(BuildContext context) {
     AuthService().logout();

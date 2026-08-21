@@ -14,26 +14,31 @@ class RolePermissions {
   // DEVICES
   // ============================================================
 
-  /// All roles except Pharmacist can view IoT devices.
+  /// Admin, Warehouse Staff and Pharmacist can view IoT devices.
+  ///
+  /// Pharmacists may have IoT devices inside pharmacies
+  /// or vaccine storage rooms.
   static bool canViewDevices(UserRole role) {
-    return role == UserRole.pharmacist;
+    return role == UserRole.admin ||
+        role == UserRole.warehouseStaff ||
+        role == UserRole.pharmacist;
   }
 
-  /// Admin and Warehouse Staff can add devices.
+  /// Admin, Warehouse Staff and Pharmacist can add devices.
   static bool canAddDevice(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
         role == UserRole.pharmacist;
   }
 
-  /// Admin and Warehouse Staff can edit devices.
+  /// Admin, Warehouse Staff and Pharmacist can edit devices.
   static bool canEditDevice(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
         role == UserRole.pharmacist;
   }
 
-  /// Only Admin can delete devices.
+  /// Admin, Warehouse Staff and Pharmacist can delete devices.
   static bool canDeleteDevice(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -65,7 +70,7 @@ class RolePermissions {
         role == UserRole.salesRepresentative;
   }
 
-  /// Admin and Warehouse Staff can delete vaccine batches.
+  /// Admin, Warehouse Staff and Pharmacist can delete vaccine batches.
   static bool canDeleteBatch(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -107,10 +112,8 @@ class RolePermissions {
   // INVENTORY
   // ============================================================
 
-  /// Users who can view vaccine inventory.
-  ///
-  /// Pharmacist needs inventory access because inventory
-  /// is important for deciding when to request vaccines.
+  /// Admin, Warehouse Staff, Sales Representative and
+  /// Pharmacist can view vaccine inventory.
   static bool canViewInventory(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -118,21 +121,21 @@ class RolePermissions {
         role == UserRole.pharmacist;
   }
 
-  /// Only Admin and Warehouse Staff can add stock.
+  /// Admin, Warehouse Staff and Pharmacist can add stock.
   static bool canAddInventory(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
         role == UserRole.pharmacist;
   }
 
-  /// Only Admin and Warehouse Staff can edit inventory.
+  /// Admin, Warehouse Staff and Pharmacist can edit inventory.
   static bool canEditInventory(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
         role == UserRole.pharmacist;
   }
 
-  /// Only Admin and Warehouse Staff can remove/reduce stock.
+  /// Admin, Warehouse Staff and Pharmacist can remove/reduce stock.
   static bool canRemoveInventory(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -143,7 +146,8 @@ class RolePermissions {
   // ORDER REQUESTS
   // ============================================================
 
-  /// Users who can view order requests.
+  /// Admin, Warehouse Staff, Sales Representative and
+  /// Pharmacist can view order requests.
   static bool canViewOrderRequests(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -151,9 +155,8 @@ class RolePermissions {
         role == UserRole.pharmacist;
   }
 
-  /// Users who can create order requests.
-  ///
-  /// Pharmacists can create requests when stock is low.
+  /// Admin, Warehouse Staff, Sales Representative and
+  /// Pharmacist can create order requests.
   static bool canCreateOrderRequest(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -161,7 +164,7 @@ class RolePermissions {
         role == UserRole.pharmacist;
   }
 
-  /// Admin and Warehouse Staff can approve/reject
+  /// Admin, Warehouse Staff and Pharmacist can manage
   /// order requests.
   static bool canManageOrderRequests(UserRole role) {
     return role == UserRole.admin ||
@@ -185,7 +188,8 @@ class RolePermissions {
     return role == UserRole.admin || role == UserRole.warehouseStaff;
   }
 
-  /// Users who can track order requests.
+  /// Admin, Warehouse Staff, Sales Representative and
+  /// Pharmacist can track orders.
   static bool canTrackOrders(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -199,9 +203,6 @@ class RolePermissions {
 
   /// Admin, Warehouse Staff, Facility Staff and Pharmacist
   /// can view waste records.
-  ///
-  /// Sales Representative does not need direct waste
-  /// management access.
   static bool canViewWaste(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -209,7 +210,8 @@ class RolePermissions {
         role == UserRole.pharmacist;
   }
 
-  /// Users who can register vaccine wastage.
+  /// Admin, Warehouse Staff, Facility Staff and Pharmacist
+  /// can register vaccine wastage.
   static bool canRegisterWaste(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||
@@ -234,7 +236,8 @@ class RolePermissions {
         role == UserRole.facilityStaff;
   }
 
-  /// Users who can create maintenance requests.
+  /// Admin, Warehouse Staff and Facility Staff
+  /// can create maintenance requests.
   static bool canCreateMaintenanceRequest(UserRole role) {
     return role == UserRole.admin ||
         role == UserRole.warehouseStaff ||

@@ -25,7 +25,10 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // FIX: Scaffold key for opening the drawer safely
+  // ================================================================
+  // SERVICES & STATE
+  // ================================================================
+
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final AuthService _authService = AuthService();
@@ -33,6 +36,10 @@ class _DashboardPageState extends State<DashboardPage> {
   final int _currentIndex = 0;
 
   UserModel? get currentUser => _authService.currentUser;
+
+  // ================================================================
+  // REFRESH
+  // ================================================================
 
   Future<void> refreshDashboard() async {
     await Future.delayed(const Duration(seconds: 2));
@@ -44,16 +51,21 @@ class _DashboardPageState extends State<DashboardPage> {
     ).showSnackBar(const SnackBar(content: Text("Dashboard refreshed")));
   }
 
+  // ================================================================
+  // BOTTOM NAVIGATION
+  // ================================================================
+
   void _onBottomNavTap(int index) {
     if (index == _currentIndex) return;
+
+    final user = currentUser;
 
     switch (index) {
       case 0:
         break;
 
       case 1:
-        if (currentUser != null &&
-            RolePermissions.canViewDevices(currentUser!.role)) {
+        if (user != null && RolePermissions.canViewDevices(user.role)) {
           Navigator.pushReplacementNamed(context, AppRoutes.devices);
         } else {
           _showAccessDenied();
@@ -70,6 +82,10 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  // ================================================================
+  // ACCESS DENIED
+  // ================================================================
+
   void _showAccessDenied() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -77,6 +93,10 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  // ================================================================
+  // LOGOUT
+  // ================================================================
 
   void _logout() {
     _authService.logout();
@@ -88,12 +108,15 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // ================================================================
+  // BUILD
+  // ================================================================
+
   @override
   Widget build(BuildContext context) {
     final user = currentUser;
 
     return Scaffold(
-      // FIX: Attach key to Scaffold
       key: _scaffoldKey,
 
       backgroundColor: const Color(0xffF6F8FC),
@@ -103,6 +126,9 @@ class _DashboardPageState extends State<DashboardPage> {
       // ============================================================
       drawer: _buildDrawer(user),
 
+      // ============================================================
+      // BODY
+      // ============================================================
       body: RefreshIndicator(
         onRefresh: refreshDashboard,
 
@@ -111,49 +137,77 @@ class _DashboardPageState extends State<DashboardPage> {
 
           child: Column(
             children: [
+              // ----------------------------------------------------
+              // HEADER
+              // ----------------------------------------------------
               DashboardHeader(
                 userName: user?.name ?? "User",
                 userRole: user?.roleName ?? "User",
                 notificationCount: 3,
-
-                // FIX: Open drawer using Scaffold key
                 onMenuPressed: () {
                   _scaffoldKey.currentState?.openDrawer();
                 },
               ),
 
+              // ----------------------------------------------------
+              // OVERVIEW
+              // ----------------------------------------------------
               _buildOverview(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // ENVIRONMENT
+              // ----------------------------------------------------
               _buildEnvironment(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // QUICK ACTIONS
+              // ----------------------------------------------------
               _buildQuickActions(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // DEVICES
+              // ----------------------------------------------------
               _buildDevices(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // ALERTS
+              // ----------------------------------------------------
               _buildAlerts(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // INVENTORY
+              // ----------------------------------------------------
               _buildInventorySummary(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // ORDER REQUESTS
+              // ----------------------------------------------------
               _buildOrderSummary(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // BATCHES
+              // ----------------------------------------------------
               _buildBatchSummary(),
 
               const SizedBox(height: 25),
 
+              // ----------------------------------------------------
+              // RECENT ACTIVITY
+              // ----------------------------------------------------
               _buildRecentActivity(),
 
               const SizedBox(height: 30),
@@ -181,11 +235,12 @@ class _DashboardPageState extends State<DashboardPage> {
       child: SafeArea(
         child: Column(
           children: [
-            // --------------------------------------------------------
-            // Drawer Header
-            // --------------------------------------------------------
+            // ======================================================
+            // HEADER
+            // ======================================================
             Container(
               width: double.infinity,
+
               padding: const EdgeInsets.all(24),
 
               decoration: const BoxDecoration(
@@ -248,9 +303,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
             const SizedBox(height: 10),
 
-            // --------------------------------------------------------
-            // Dashboard
-            // --------------------------------------------------------
+            // ======================================================
+            // DASHBOARD
+            // ======================================================
             _drawerItem(
               icon: Icons.dashboard_rounded,
               title: "Dashboard",
@@ -259,9 +314,9 @@ class _DashboardPageState extends State<DashboardPage> {
               },
             ),
 
-            // --------------------------------------------------------
-            // Inventory
-            // --------------------------------------------------------
+            // ======================================================
+            // INVENTORY
+            // ======================================================
             if (user != null && RolePermissions.canViewInventory(user.role))
               _drawerItem(
                 icon: Icons.inventory_2_rounded,
@@ -273,9 +328,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
 
-            // --------------------------------------------------------
-            // Order Requests
-            // --------------------------------------------------------
+            // ======================================================
+            // ORDER REQUESTS
+            // ======================================================
             if (user != null && RolePermissions.canViewOrderRequests(user.role))
               _drawerItem(
                 icon: Icons.shopping_cart_rounded,
@@ -287,9 +342,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
 
-            // --------------------------------------------------------
-            // Waste Management
-            // --------------------------------------------------------
+            // ======================================================
+            // WASTE MANAGEMENT
+            // ======================================================
             if (user != null && RolePermissions.canViewWaste(user.role))
               _drawerItem(
                 icon: Icons.delete_sweep_rounded,
@@ -301,9 +356,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
 
-            // --------------------------------------------------------
-            // Maintenance
-            // --------------------------------------------------------
+            // ======================================================
+            // MAINTENANCE
+            // ======================================================
             if (user != null && RolePermissions.canViewMaintenance(user.role))
               _drawerItem(
                 icon: Icons.build_rounded,
@@ -315,9 +370,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
 
-            // --------------------------------------------------------
-            // Reports
-            // --------------------------------------------------------
+            // ======================================================
+            // REPORTS
+            // ======================================================
             if (user != null && RolePermissions.canViewReports(user.role))
               _drawerItem(
                 icon: Icons.bar_chart_rounded,
@@ -329,11 +384,26 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
 
+            // ======================================================
+            // USER MANAGEMENT
+            // ADMIN ONLY THROUGH PERMISSION
+            // ======================================================
+            if (user != null && RolePermissions.canManageUsers(user.role))
+              _drawerItem(
+                icon: Icons.manage_accounts_rounded,
+                title: "User Management",
+                onTap: () {
+                  Navigator.pop(context);
+
+                  Navigator.pushNamed(context, AppRoutes.userManagement);
+                },
+              ),
+
             const Divider(height: 25, indent: 16, endIndent: 16),
 
-            // --------------------------------------------------------
-            // Settings
-            // --------------------------------------------------------
+            // ======================================================
+            // SETTINGS
+            // ======================================================
             if (user != null && RolePermissions.canAccessSettings(user.role))
               _drawerItem(
                 icon: Icons.settings_rounded,
@@ -347,9 +417,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
             const Spacer(),
 
-            // --------------------------------------------------------
-            // Logout
-            // --------------------------------------------------------
+            // ======================================================
+            // LOGOUT
+            // ======================================================
             _drawerItem(
               icon: Icons.logout_rounded,
               title: "Logout",
@@ -371,6 +441,10 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+
+  // ================================================================
+  // DRAWER ITEM
+  // ================================================================
 
   Widget _drawerItem({
     required IconData icon,
@@ -402,6 +476,8 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================================================
 
   Widget _buildOverview() {
+    final user = currentUser;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
 
@@ -409,7 +485,7 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-          SectionHeader(
+          const SectionHeader(
             icon: Icons.dashboard_rounded,
             title: "Overview",
             subtitle: "System health at a glance",
@@ -427,15 +503,19 @@ class _DashboardPageState extends State<DashboardPage> {
             childAspectRatio: 0.85,
 
             children: [
+              // ----------------------------------------------------
+              // DEVICES
+              // ----------------------------------------------------
               StatCard(
                 title: "Devices",
                 value: "24",
                 subtitle: "22 Online",
                 icon: Icons.memory,
                 status: StatCardStatus.success,
+
                 onTap: () {
-                  if (currentUser != null &&
-                      RolePermissions.canViewDevices(currentUser!.role)) {
+                  if (user != null &&
+                      RolePermissions.canViewDevices(user.role)) {
                     Navigator.pushNamed(context, AppRoutes.devices);
                   } else {
                     _showAccessDenied();
@@ -443,35 +523,45 @@ class _DashboardPageState extends State<DashboardPage> {
                 },
               ),
 
+              // ----------------------------------------------------
+              // ALERTS
+              // ----------------------------------------------------
               StatCard(
                 title: "Alerts",
                 value: "3",
                 subtitle: "Critical",
                 icon: Icons.warning_amber,
                 status: StatCardStatus.danger,
+
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.alerts);
                 },
               ),
 
+              // ----------------------------------------------------
+              // BATCHES
+              // ----------------------------------------------------
               StatCard(
                 title: "Batches",
                 value: "12",
                 subtitle: "Active",
                 icon: Icons.vaccines,
                 status: StatCardStatus.normal,
+
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.batches);
                 },
               ),
 
-              StatCard(
+              // ----------------------------------------------------
+              // COMPLIANCE
+              // ----------------------------------------------------
+              const StatCard(
                 title: "Compliance",
                 value: "96%",
                 subtitle: "Healthy",
                 icon: Icons.health_and_safety,
                 status: StatCardStatus.success,
-                onTap: () {},
               ),
             ],
           ),
@@ -481,12 +571,15 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ================================================================
-  // ENVIRONMENT
+  // LIVE ENVIRONMENT
   // ================================================================
 
   Widget _buildEnvironment() {
-    if (currentUser != null &&
-        !RolePermissions.canViewDevices(currentUser!.role)) {
+    final user = currentUser;
+
+    // Pharmacist is allowed here because
+    // Pharmacist can access IoT devices.
+    if (user == null || !RolePermissions.canViewDevices(user.role)) {
       return const SizedBox.shrink();
     }
 
@@ -497,7 +590,7 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-          SectionHeader(
+          const SectionHeader(
             icon: Icons.sensors,
             title: "Live Environment",
             subtitle: "Real-time IoT sensor readings",
@@ -566,12 +659,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final actions = <Widget>[];
 
+    // --------------------------------------------------------------
+    // REGISTER DEVICE
+    // --------------------------------------------------------------
+
     if (RolePermissions.canAddDevice(user.role)) {
       actions.add(
         QuickActionCard(
           title: "Register Device",
           subtitle: "Add new IoT device",
           icon: Icons.add_box_outlined,
+
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.addDevice);
           },
@@ -579,12 +677,17 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+    // --------------------------------------------------------------
+    // ADD BATCH
+    // --------------------------------------------------------------
+
     if (RolePermissions.canAddBatch(user.role)) {
       actions.add(
         QuickActionCard(
           title: "Add Batch",
           subtitle: "Create vaccine batch",
           icon: Icons.vaccines_outlined,
+
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.addBatch);
           },
@@ -592,16 +695,27 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+    // --------------------------------------------------------------
+    // SCAN QR
+    // --------------------------------------------------------------
+
     if (RolePermissions.canScanQR(user.role)) {
       actions.add(
         QuickActionCard(
           title: "Scan QR",
           subtitle: "Scan vaccine QR",
           icon: Icons.qr_code_scanner,
-          onTap: () {},
+
+          onTap: () {
+            // Add QR route here when QR page is implemented.
+          },
         ),
       );
     }
+
+    // --------------------------------------------------------------
+    // INVENTORY
+    // --------------------------------------------------------------
 
     if (RolePermissions.canViewInventory(user.role)) {
       actions.add(
@@ -609,6 +723,7 @@ class _DashboardPageState extends State<DashboardPage> {
           title: "Inventory",
           subtitle: "Manage vaccine stock",
           icon: Icons.inventory_2_outlined,
+
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.inventory);
           },
@@ -616,12 +731,17 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+    // --------------------------------------------------------------
+    // ORDER REQUEST
+    // --------------------------------------------------------------
+
     if (RolePermissions.canCreateOrderRequest(user.role)) {
       actions.add(
         QuickActionCard(
           title: "Order Request",
           subtitle: "Request vaccine stock",
           icon: Icons.shopping_cart_outlined,
+
           onTap: () {
             Navigator.pushNamed(context, AppRoutes.orderRequests);
           },
@@ -640,7 +760,7 @@ class _DashboardPageState extends State<DashboardPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-          SectionHeader(
+          const SectionHeader(
             icon: Icons.flash_on,
             title: "Quick Actions",
             subtitle: "Available actions for your role",
@@ -669,8 +789,9 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================================================
 
   Widget _buildDevices() {
-    if (currentUser != null &&
-        !RolePermissions.canViewDevices(currentUser!.role)) {
+    final user = currentUser;
+
+    if (user == null || !RolePermissions.canViewDevices(user.role)) {
       return const SizedBox.shrink();
     }
 
@@ -684,6 +805,7 @@ class _DashboardPageState extends State<DashboardPage> {
             title: "Connected Devices",
             subtitle: "24 registered devices",
             actionText: "View All",
+
             onActionPressed: () {
               Navigator.pushNamed(context, AppRoutes.devices);
             },
@@ -744,6 +866,7 @@ class _DashboardPageState extends State<DashboardPage> {
             title: "Recent Alerts",
             subtitle: "3 active alerts",
             actionText: "See All",
+
             onActionPressed: () {
               Navigator.pushNamed(context, AppRoutes.alerts);
             },
@@ -804,6 +927,7 @@ class _DashboardPageState extends State<DashboardPage> {
             title: "Inventory",
             subtitle: "Vaccine stock overview",
             actionText: "View All",
+
             onActionPressed: () {
               Navigator.pushNamed(context, AppRoutes.inventory);
             },
@@ -902,6 +1026,7 @@ class _DashboardPageState extends State<DashboardPage> {
             title: "Order Requests",
             subtitle: "Vaccine supply requests",
             actionText: "View All",
+
             onActionPressed: () {
               Navigator.pushNamed(context, AppRoutes.orderRequests);
             },
@@ -987,6 +1112,7 @@ class _DashboardPageState extends State<DashboardPage> {
             title: "Vaccine Batches",
             subtitle: "Cold chain inventory",
             actionText: "Manage",
+
             onActionPressed: () {
               Navigator.pushNamed(context, AppRoutes.batches);
             },
@@ -1036,12 +1162,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
       child: Column(
         children: [
-          SectionHeader(
+          const SectionHeader(
             icon: Icons.history,
             title: "Recent Activity",
             subtitle: "Latest system events",
             actionText: "View All",
-            onActionPressed: () {},
           ),
 
           const ActivityTile(
