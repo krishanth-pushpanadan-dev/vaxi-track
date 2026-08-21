@@ -324,10 +324,6 @@ class _DevicesPageState extends State<DevicesPage> {
             case 3:
               Navigator.pushReplacementNamed(context, AppRoutes.alerts);
               break;
-
-            case 4:
-              Navigator.pushReplacementNamed(context, AppRoutes.settings);
-              break;
           }
         },
       ),

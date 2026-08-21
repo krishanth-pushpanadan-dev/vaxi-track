@@ -326,10 +326,6 @@ class _BatchesPageState extends State<BatchesPage> {
             case 3:
               Navigator.pushReplacementNamed(context, AppRoutes.alerts);
               break;
-
-            case 4:
-              Navigator.pushReplacementNamed(context, AppRoutes.settings);
-              break;
           }
         },
       ),

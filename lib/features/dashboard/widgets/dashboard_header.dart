@@ -4,12 +4,16 @@ import '../../../app/app_colors.dart';
 
 class DashboardHeader extends StatelessWidget {
   final String userName;
+  final String userRole;
   final int notificationCount;
+  final VoidCallback? onMenuPressed;
 
   const DashboardHeader({
     super.key,
     required this.userName,
+    required this.userRole,
     this.notificationCount = 0,
+    this.onMenuPressed,
   });
 
   String getGreeting() {
@@ -43,35 +47,56 @@ class DashboardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 55, 24, 30),
+      padding: const EdgeInsets.fromLTRB(20, 55, 20, 30),
+
       decoration: const BoxDecoration(
         gradient: AppColors.primaryGradient,
+
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
       ),
+
       child: Column(
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.white.withOpacity(.25),
-                child: const Icon(Icons.person, color: Colors.white, size: 30),
+              // ======================================================
+              // MENU BUTTON
+              // ======================================================
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(.20),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+
+                child: IconButton(
+                  // FIX: Parent DashboardPage controls the drawer
+                  onPressed: onMenuPressed,
+
+                  icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
+
+              // ======================================================
+              // PROFILE
+              // ======================================================
+              const SizedBox(width: 12),
 
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     Text(
                       getGreeting(),
+
                       style: TextStyle(
                         color: Colors.white.withOpacity(.85),
-                        fontSize: 15,
+                        fontSize: 13,
                       ),
                     ),
 
@@ -79,38 +104,47 @@ class DashboardHeader extends StatelessWidget {
 
                     Text(
                       userName,
+
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 24,
+                        fontSize: 20,
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 5),
 
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          color: Colors.white70,
-                          size: 16,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 4,
+                      ),
+
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+
+                      child: Text(
+                        userRole,
+
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
-
-                        const SizedBox(width: 5),
-
-                        Text(
-                          "Last Sync ${getCurrentTime()}",
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
 
+              // ======================================================
+              // NOTIFICATIONS
+              // ======================================================
               Stack(
                 children: [
                   Container(
@@ -118,8 +152,12 @@ class DashboardHeader extends StatelessWidget {
                       color: Colors.white.withOpacity(.20),
                       borderRadius: BorderRadius.circular(15),
                     ),
+
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // Alerts page can be connected here later.
+                      },
+
                       icon: const Icon(
                         Icons.notifications_none,
                         color: Colors.white,
@@ -131,16 +169,20 @@ class DashboardHeader extends StatelessWidget {
                     Positioned(
                       top: 5,
                       right: 5,
+
                       child: Container(
                         height: 18,
                         width: 18,
+
                         decoration: const BoxDecoration(
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
+
                         child: Center(
                           child: Text(
                             notificationCount.toString(),
+
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -157,12 +199,17 @@ class DashboardHeader extends StatelessWidget {
 
           const SizedBox(height: 28),
 
+          // ==========================================================
+          // COLD CHAIN STATUS
+          // ==========================================================
           Container(
             padding: const EdgeInsets.all(18),
+
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(.15),
               borderRadius: BorderRadius.circular(18),
             ),
+
             child: Row(
               children: [
                 const Icon(
@@ -176,9 +223,11 @@ class DashboardHeader extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: const [
                       Text(
                         "Cold Chain Status",
+
                         style: TextStyle(color: Colors.white70, fontSize: 13),
                       ),
 
@@ -186,6 +235,7 @@ class DashboardHeader extends StatelessWidget {
 
                       Text(
                         "All Systems Operational",
+
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -201,12 +251,15 @@ class DashboardHeader extends StatelessWidget {
                     horizontal: 14,
                     vertical: 8,
                   ),
+
                   decoration: BoxDecoration(
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(25),
                   ),
+
                   child: const Text(
                     "96%",
+
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -215,6 +268,24 @@ class DashboardHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+
+            children: [
+              const Icon(Icons.access_time, color: Colors.white70, size: 14),
+
+              const SizedBox(width: 5),
+
+              Text(
+                "Last Sync ${getCurrentTime()}",
+
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
           ),
         ],
       ),

@@ -1,4 +1,10 @@
-enum UserRole { admin, warehouseStaff, salesRepresentative, facilityStaff }
+enum UserRole {
+  admin,
+  warehouseStaff,
+  salesRepresentative,
+  facilityStaff,
+  pharmacist,
+}
 
 class UserModel {
   final String id;
@@ -26,6 +32,9 @@ class UserModel {
 
       case UserRole.facilityStaff:
         return 'Facility Staff';
+
+      case UserRole.pharmacist:
+        return 'Pharmacist';
     }
   }
 }

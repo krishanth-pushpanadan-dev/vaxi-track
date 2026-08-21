@@ -39,25 +39,28 @@ class BottomNavBar extends StatelessWidget {
           selectedFontSize: 12,
           unselectedFontSize: 12,
           items: const [
+            // 0 - Home
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_rounded),
               label: "Home",
             ),
+
+            // 1 - Devices
             BottomNavigationBarItem(
               icon: Icon(Icons.memory_rounded),
               label: "Devices",
             ),
+
+            // 2 - Vaccine Batches
             BottomNavigationBarItem(
               icon: Icon(Icons.vaccines_rounded),
               label: "Batches",
             ),
+
+            // 3 - Alerts
             BottomNavigationBarItem(
               icon: Icon(Icons.notifications_active_rounded),
               label: "Alerts",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings_rounded),
-              label: "Settings",
             ),
           ],
         ),
