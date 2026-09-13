@@ -12,6 +12,26 @@ import '../features/vaccine_batches/presentation/batches_page.dart';
 import '../features/alerts/presentation/alerts_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 
+// ============================================================
+// IMPLEMENTED BUSINESS FEATURES
+// ============================================================
+
+import '../features/inventory/presentation/inventory_page.dart';
+import '../features/inventory/presentation/add_stock_page.dart';
+import '../features/order_requests/presentation/order_requests_page.dart';
+
+// ============================================================
+// ADD THESE IMPORTS WHEN THE PAGES EXIST
+// ============================================================
+//
+
+// import '../features/waste/presentation/waste_page.dart';
+// import '../features/maintenance/presentation/maintenance_page.dart';
+// import '../features/reports/presentation/reports_page.dart';
+// import '../features/user_management/presentation/user_management_page.dart';
+// import '../features/devices/presentation/add_device_page.dart';
+// import '../features/vaccine_batches/presentation/add_batch_page.dart';
+
 class AppRoutes {
   AppRoutes._();
 
@@ -54,10 +74,16 @@ class AppRoutes {
   static const String addBatch = "/dashboard/batches/add";
 
   // ============================================================
-  // BUSINESS FEATURES
+  // INVENTORY
   // ============================================================
 
   static const String inventory = "/dashboard/inventory";
+
+  static const String addStock = "/dashboard/inventory/add-stock";
+
+  // ============================================================
+  // OTHER BUSINESS FEATURES
+  // ============================================================
 
   static const String orderRequests = "/dashboard/order-requests";
 
@@ -74,7 +100,9 @@ class AppRoutes {
   // ============================================================
 
   static final Map<String, WidgetBuilder> routes = {
-    // Authentication
+    // ----------------------------------------------------------
+    // AUTHENTICATION
+    // ----------------------------------------------------------
     splash: (_) => const SplashPage(),
 
     login: (_) => const LoginPage(),
@@ -83,7 +111,9 @@ class AppRoutes {
 
     forgotPassword: (_) => const ForgotPasswordPage(),
 
-    // Main
+    // ----------------------------------------------------------
+    // MAIN
+    // ----------------------------------------------------------
     dashboard: (_) => const DashboardPage(),
 
     devices: (_) => const DevicesPage(),
@@ -93,5 +123,33 @@ class AppRoutes {
     alerts: (_) => const AlertsPage(),
 
     settings: (_) => const SettingsPage(),
+
+    // ----------------------------------------------------------
+    // INVENTORY
+    // ----------------------------------------------------------
+    inventory: (_) => const InventoryPage(),
+
+    addStock: (_) => const AddStockPage(),
+
+    // ----------------------------------------------------------
+    // OTHER BUSINESS FEATURES
+    // ----------------------------------------------------------
+    orderRequests: (_) => const OrderRequestsPage(),
+
+    // waste: (_) => const WastePage(),
+
+    // maintenance: (_) => const MaintenancePage(),
+
+    // reports: (_) => const ReportsPage(),
+
+    // userManagement: (_) => const UserManagementPage(),
+
+    // ----------------------------------------------------------
+    // ADD / CREATE PAGES
+    // ----------------------------------------------------------
+
+    // addDevice: (_) => const AddDevicePage(),
+
+    // addBatch: (_) => const AddBatchPage(),
   };
 }

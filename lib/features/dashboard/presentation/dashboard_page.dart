@@ -6,6 +6,9 @@ import '../../authentication/models/user_model.dart';
 import '../../authentication/models/role_permissions.dart';
 import '../../authentication/services/auth_service.dart';
 
+import '../../order_requests/presentation/marketplace_page.dart';
+import '../../order_requests/presentation/supplier_products_page.dart';
+
 import '../widgets/dashboard_header.dart';
 import '../widgets/section_header.dart';
 import '../widgets/stat_card.dart';
@@ -95,6 +98,113 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   // ================================================================
+  // ORDER REQUEST NAVIGATION
+  // ================================================================
+
+  void _openOrderRequest() {
+    final user = currentUser;
+
+    if (user == null) {
+      _showAccessDenied();
+      return;
+    }
+
+    if (!RolePermissions.canViewOrderRequests(user.role)) {
+      _showAccessDenied();
+      return;
+    }
+
+    // --------------------------------------------------------------
+    // PHARMACIST
+    // --------------------------------------------------------------
+    // Pharmacist starts from the Supply Marketplace.
+    //
+    // Flow:
+    //
+    // Marketplace
+    //      ↓
+    // Product
+    //      ↓
+    // Product Details
+    //      ↓
+    // Request Product
+    //      ↓
+    // Create Order
+    //      ↓
+    // My Orders
+    // --------------------------------------------------------------
+
+    if (user.role == UserRole.pharmacist) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MarketplacePage()),
+      );
+
+      return;
+    }
+
+    // --------------------------------------------------------------
+    // OTHER ORDERING ROLES
+    // --------------------------------------------------------------
+    // Admin, Warehouse Staff and Sales Representative
+    // can access Order Requests.
+    // --------------------------------------------------------------
+
+    Navigator.pushNamed(context, AppRoutes.orderRequests);
+  }
+
+  // ================================================================
+  // SUPPLIER PRODUCTS NAVIGATION
+  // ================================================================
+
+  void _openSupplierProducts() {
+    final user = currentUser;
+
+    if (user == null) {
+      _showAccessDenied();
+      return;
+    }
+
+    if (!RolePermissions.canViewSupplierProducts(user.role)) {
+      _showAccessDenied();
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SupplierProductsPage()),
+    );
+  }
+
+  // ================================================================
+  // MARKETPLACE NAVIGATION
+  // ================================================================
+
+  void _openMarketplace() {
+    final user = currentUser;
+
+    if (user == null) {
+      _showAccessDenied();
+      return;
+    }
+
+    if (!RolePermissions.canViewOrderRequests(user.role)) {
+      _showAccessDenied();
+      return;
+    }
+
+    if (user.role != UserRole.pharmacist) {
+      _showAccessDenied();
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MarketplacePage()),
+    );
+  }
+
+  // ================================================================
   // LOGOUT
   // ================================================================
 
@@ -144,6 +254,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 userName: user?.name ?? "User",
                 userRole: user?.roleName ?? "User",
                 notificationCount: 3,
+
                 onMenuPressed: () {
                   _scaffoldKey.currentState?.openDrawer();
                 },
@@ -235,22 +346,19 @@ class _DashboardPageState extends State<DashboardPage> {
       child: SafeArea(
         child: Column(
           children: [
-            // ======================================================
+            // ============================================================
             // HEADER
-            // ======================================================
+            // ============================================================
             Container(
               width: double.infinity,
-
               padding: const EdgeInsets.all(24),
-
               decoration: const BoxDecoration(
                 gradient: AppColors.primaryGradient,
               ),
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
+                  // Profile Icon
                   const CircleAvatar(
                     radius: 34,
                     backgroundColor: Colors.white24,
@@ -259,6 +367,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   const SizedBox(height: 15),
 
+                  // User Name
                   Text(
                     user?.name ?? "User",
                     style: const TextStyle(
@@ -270,6 +379,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   const SizedBox(height: 5),
 
+                  // Email
                   Text(
                     user?.email ?? "",
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
@@ -277,17 +387,16 @@ class _DashboardPageState extends State<DashboardPage> {
 
                   const SizedBox(height: 10),
 
+                  // Role Badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
                     ),
-
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(20),
                     ),
-
                     child: Text(
                       user?.roleName ?? "User",
                       style: const TextStyle(
@@ -301,125 +410,174 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
 
-            const SizedBox(height: 10),
+            // ============================================================
+            // SCROLLABLE MENU
+            // ============================================================
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  const SizedBox(height: 8),
 
-            // ======================================================
-            // DASHBOARD
-            // ======================================================
-            _drawerItem(
-              icon: Icons.dashboard_rounded,
-              title: "Dashboard",
-              onTap: () {
-                Navigator.pop(context);
-              },
+                  // ======================================================
+                  // DASHBOARD
+                  // ======================================================
+                  _drawerItem(
+                    icon: Icons.dashboard_rounded,
+                    title: "Dashboard",
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // ======================================================
+                  // INVENTORY
+                  // ======================================================
+                  if (user != null &&
+                      RolePermissions.canViewInventory(user.role))
+                    _drawerItem(
+                      icon: Icons.inventory_2_rounded,
+                      title: "Inventory",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.inventory);
+                      },
+                    ),
+
+                  // ======================================================
+                  // SUPPLY MARKETPLACE
+                  // PHARMACIST ONLY
+                  // ======================================================
+                  if (user != null &&
+                      user.role == UserRole.pharmacist &&
+                      RolePermissions.canViewOrderRequests(user.role))
+                    _drawerItem(
+                      icon: Icons.storefront_rounded,
+                      title: "Supply Marketplace",
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openMarketplace();
+                      },
+                    ),
+
+                  // ======================================================
+                  // SUPPLIER PRODUCTS
+                  // ADMIN / WAREHOUSE / SALES
+                  // ======================================================
+                  if (user != null &&
+                      RolePermissions.canViewSupplierProducts(user.role))
+                    _drawerItem(
+                      icon: Icons.storefront_rounded,
+                      title: "Supplier Products",
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openSupplierProducts();
+                      },
+                    ),
+
+                  // ======================================================
+                  // ORDER REQUESTS
+                  // NON-PHARMACIST ORDERING ROLES
+                  // ======================================================
+                  if (user != null &&
+                      user.role != UserRole.pharmacist &&
+                      RolePermissions.canViewOrderRequests(user.role))
+                    _drawerItem(
+                      icon: Icons.shopping_cart_rounded,
+                      title: "Order Requests",
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openOrderRequest();
+                      },
+                    ),
+
+                  // ======================================================
+                  // WASTE MANAGEMENT
+                  // ======================================================
+                  if (user != null && RolePermissions.canViewWaste(user.role))
+                    _drawerItem(
+                      icon: Icons.delete_sweep_rounded,
+                      title: "Waste Management",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.waste);
+                      },
+                    ),
+
+                  // ======================================================
+                  // MAINTENANCE
+                  // ======================================================
+                  if (user != null &&
+                      RolePermissions.canViewMaintenance(user.role))
+                    _drawerItem(
+                      icon: Icons.build_rounded,
+                      title: "Maintenance",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.maintenance);
+                      },
+                    ),
+
+                  // ======================================================
+                  // REPORTS
+                  // ======================================================
+                  if (user != null && RolePermissions.canViewReports(user.role))
+                    _drawerItem(
+                      icon: Icons.bar_chart_rounded,
+                      title: "Reports",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.reports);
+                      },
+                    ),
+
+                  // ======================================================
+                  // USER MANAGEMENT
+                  // ADMIN ONLY
+                  // ======================================================
+                  if (user != null && RolePermissions.canManageUsers(user.role))
+                    _drawerItem(
+                      icon: Icons.manage_accounts_rounded,
+                      title: "User Management",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.userManagement);
+                      },
+                    ),
+
+                  // ======================================================
+                  // DIVIDER
+                  // ======================================================
+                  const Divider(height: 25, indent: 16, endIndent: 16),
+
+                  // ======================================================
+                  // SETTINGS
+                  // ======================================================
+                  if (user != null &&
+                      RolePermissions.canAccessSettings(user.role))
+                    _drawerItem(
+                      icon: Icons.settings_rounded,
+                      title: "Settings",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, AppRoutes.settings);
+                      },
+                    ),
+
+                  // Extra bottom padding for scrolling
+                  const SizedBox(height: 10),
+                ],
+              ),
             ),
 
-            // ======================================================
-            // INVENTORY
-            // ======================================================
-            if (user != null && RolePermissions.canViewInventory(user.role))
-              _drawerItem(
-                icon: Icons.inventory_2_rounded,
-                title: "Inventory",
-                onTap: () {
-                  Navigator.pop(context);
+            // ============================================================
+            // FIXED BOTTOM SECTION
+            // ============================================================
+            const Divider(height: 1),
 
-                  Navigator.pushNamed(context, AppRoutes.inventory);
-                },
-              ),
-
-            // ======================================================
-            // ORDER REQUESTS
-            // ======================================================
-            if (user != null && RolePermissions.canViewOrderRequests(user.role))
-              _drawerItem(
-                icon: Icons.shopping_cart_rounded,
-                title: "Order Requests",
-                onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.pushNamed(context, AppRoutes.orderRequests);
-                },
-              ),
-
-            // ======================================================
-            // WASTE MANAGEMENT
-            // ======================================================
-            if (user != null && RolePermissions.canViewWaste(user.role))
-              _drawerItem(
-                icon: Icons.delete_sweep_rounded,
-                title: "Waste Management",
-                onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.pushNamed(context, AppRoutes.waste);
-                },
-              ),
-
-            // ======================================================
-            // MAINTENANCE
-            // ======================================================
-            if (user != null && RolePermissions.canViewMaintenance(user.role))
-              _drawerItem(
-                icon: Icons.build_rounded,
-                title: "Maintenance",
-                onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.pushNamed(context, AppRoutes.maintenance);
-                },
-              ),
-
-            // ======================================================
-            // REPORTS
-            // ======================================================
-            if (user != null && RolePermissions.canViewReports(user.role))
-              _drawerItem(
-                icon: Icons.bar_chart_rounded,
-                title: "Reports",
-                onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.pushNamed(context, AppRoutes.reports);
-                },
-              ),
-
-            // ======================================================
-            // USER MANAGEMENT
-            // ADMIN ONLY THROUGH PERMISSION
-            // ======================================================
-            if (user != null && RolePermissions.canManageUsers(user.role))
-              _drawerItem(
-                icon: Icons.manage_accounts_rounded,
-                title: "User Management",
-                onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.pushNamed(context, AppRoutes.userManagement);
-                },
-              ),
-
-            const Divider(height: 25, indent: 16, endIndent: 16),
-
-            // ======================================================
-            // SETTINGS
-            // ======================================================
-            if (user != null && RolePermissions.canAccessSettings(user.role))
-              _drawerItem(
-                icon: Icons.settings_rounded,
-                title: "Settings",
-                onTap: () {
-                  Navigator.pop(context);
-
-                  Navigator.pushNamed(context, AppRoutes.settings);
-                },
-              ),
-
-            const Spacer(),
-
-            // ======================================================
+            // ============================================================
             // LOGOUT
-            // ======================================================
+            // ============================================================
             _drawerItem(
               icon: Icons.logout_rounded,
               title: "Logout",
@@ -428,14 +586,17 @@ class _DashboardPageState extends State<DashboardPage> {
               onTap: _logout,
             ),
 
-            const SizedBox(height: 15),
+            // ============================================================
+            // APP NAME
+            // ============================================================
+            const SizedBox(height: 5),
 
             const Text(
               "VaxiTrack Sri Lanka",
               style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
 
-            const SizedBox(height: 15),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -454,23 +615,33 @@ class _DashboardPageState extends State<DashboardPage> {
     Color? textColor,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? AppColors.primary),
+      dense: true,
+
+      // Makes each menu item slightly more compact
+      visualDensity: const VisualDensity(vertical: -1),
+
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+
+      leading: Icon(icon, color: iconColor ?? AppColors.primary, size: 21),
 
       title: Text(
         title,
-        style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          color: textColor ?? const Color(0xff30343B),
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
+        ),
       ),
 
       trailing: const Icon(
         Icons.arrow_forward_ios,
-        size: 14,
+        size: 13,
         color: Colors.grey,
       ),
 
       onTap: onTap,
     );
   }
-
   // ================================================================
   // OVERVIEW
   // ================================================================
@@ -577,8 +748,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildEnvironment() {
     final user = currentUser;
 
-    // Pharmacist is allowed here because
-    // Pharmacist can access IoT devices.
     if (user == null || !RolePermissions.canViewDevices(user.role)) {
       return const SizedBox.shrink();
     }
@@ -731,23 +900,75 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+    // ==============================================================
+    // ORDER / MARKETPLACE ACTIONS
+    // ==============================================================
+
     // --------------------------------------------------------------
-    // ORDER REQUEST
+    // PHARMACIST
+    // --------------------------------------------------------------
+    // Pharmacist gets Supply Marketplace.
     // --------------------------------------------------------------
 
-    if (RolePermissions.canCreateOrderRequest(user.role)) {
-      actions.add(
-        QuickActionCard(
-          title: "Order Request",
-          subtitle: "Request vaccine stock",
-          icon: Icons.shopping_cart_outlined,
+    if (user.role == UserRole.pharmacist) {
+      if (RolePermissions.canViewOrderRequests(user.role)) {
+        actions.add(
+          QuickActionCard(
+            title: "Supply Marketplace",
+            subtitle: "Browse & request products",
+            icon: Icons.storefront_outlined,
 
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.orderRequests);
-          },
-        ),
-      );
+            onTap: _openMarketplace,
+          ),
+        );
+      }
     }
+    // --------------------------------------------------------------
+    // ADMIN / WAREHOUSE / SALES
+    // --------------------------------------------------------------
+    else {
+      // ------------------------------------------------------------
+      // SUPPLIER PRODUCTS
+      // ------------------------------------------------------------
+
+      if (RolePermissions.canViewSupplierProducts(user.role)) {
+        actions.add(
+          QuickActionCard(
+            title: "Supplier Products",
+
+            subtitle: user.role == UserRole.salesRepresentative
+                ? "Showcase your products"
+                : user.role == UserRole.warehouseStaff
+                ? "Manage warehouse products"
+                : "Manage marketplace",
+
+            icon: Icons.storefront_outlined,
+
+            onTap: _openSupplierProducts,
+          ),
+        );
+      }
+
+      // ------------------------------------------------------------
+      // ORDER REQUESTS
+      // ------------------------------------------------------------
+
+      if (RolePermissions.canViewOrderRequests(user.role)) {
+        actions.add(
+          QuickActionCard(
+            title: "Order Requests",
+            subtitle: "Manage supply requests",
+            icon: Icons.shopping_cart_outlined,
+
+            onTap: _openOrderRequest,
+          ),
+        );
+      }
+    }
+
+    // --------------------------------------------------------------
+    // EMPTY
+    // --------------------------------------------------------------
 
     if (actions.isEmpty) {
       return const SizedBox.shrink();
@@ -775,7 +996,7 @@ class _DashboardPageState extends State<DashboardPage> {
             crossAxisSpacing: 15,
             mainAxisSpacing: 15,
 
-            childAspectRatio: 1.1,
+            childAspectRatio: .85,
 
             children: actions,
           ),
@@ -977,6 +1198,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // ================================================================
+  // INVENTORY ITEM
+  // ================================================================
+
   Widget _inventoryItem(
     IconData icon,
     String value,
@@ -999,6 +1224,7 @@ class _DashboardPageState extends State<DashboardPage> {
         Text(
           label,
           textAlign: TextAlign.center,
+
           style: const TextStyle(color: Colors.grey, fontSize: 11),
         ),
       ],
@@ -1023,13 +1249,19 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           SectionHeader(
             icon: Icons.shopping_cart_rounded,
-            title: "Order Requests",
-            subtitle: "Vaccine supply requests",
+
+            // Pharmacist sees marketplace terminology.
+            title: user.role == UserRole.pharmacist
+                ? "Supply Marketplace"
+                : "Order Requests",
+
+            subtitle: user.role == UserRole.pharmacist
+                ? "Browse and request medical products"
+                : "Vaccine supply requests",
+
             actionText: "View All",
 
-            onActionPressed: () {
-              Navigator.pushNamed(context, AppRoutes.orderRequests);
-            },
+            onActionPressed: _openOrderRequest,
           ),
 
           Container(
@@ -1069,6 +1301,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  // ================================================================
+  // ORDER ROW
+  // ================================================================
+
   Widget _orderRow(String title, String value, Color color, IconData icon) {
     return Row(
       children: [
@@ -1079,12 +1315,14 @@ class _DashboardPageState extends State<DashboardPage> {
         Expanded(
           child: Text(
             title,
+
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
         ),
 
         Text(
           value,
+
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
