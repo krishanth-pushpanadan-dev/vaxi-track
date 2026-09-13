@@ -4,6 +4,7 @@ import 'package:vaxi_track/features/authentication/models/user_model.dart';
 import '../../authentication/models/role_permissions.dart';
 import '../../authentication/services/auth_service.dart';
 import '../model/product_model.dart';
+import '../presentation/edit_product_page.dart';
 import 'add_product_page.dart';
 import 'product_details_page.dart';
 
@@ -272,13 +273,36 @@ class _SupplierProductsPageState extends State<SupplierProductsPage> {
                   ListTile(
                     leading: const Icon(Icons.edit_outlined),
                     title: const Text('Edit Product'),
-                    onTap: () {
+                    onTap: () async {
                       Navigator.pop(context);
 
+                      final updatedProduct = await Navigator.push<Product>(
+                        this.context,
+                        MaterialPageRoute(
+                          builder: (_) => EditProductPage(product: product),
+                        ),
+                      );
+
+                      if (!mounted || updatedProduct == null) {
+                        return;
+                      }
+
+                      final index = _products.indexWhere(
+                        (item) => item.id == updatedProduct.id,
+                      );
+
+                      if (index == -1) {
+                        return;
+                      }
+
+                      setState(() {
+                        _products[index] = updatedProduct;
+                      });
+
                       ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Product editing will be connected later.',
+                            '${updatedProduct.name} updated successfully.',
                           ),
                         ),
                       );
@@ -299,12 +323,28 @@ class _SupplierProductsPageState extends State<SupplierProductsPage> {
                     onTap: () {
                       Navigator.pop(context);
 
+                      final index = _products.indexWhere(
+                        (item) => item.id == product.id,
+                      );
+
+                      if (index == -1) {
+                        return;
+                      }
+
+                      final updatedProduct = product.copyWith(
+                        isAvailable: !product.isAvailable,
+                      );
+
+                      setState(() {
+                        _products[index] = updatedProduct;
+                      });
+
                       ScaffoldMessenger.of(this.context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            product.isAvailable
-                                ? 'Product hidden from marketplace.'
-                                : 'Product shown in marketplace.',
+                            updatedProduct.isAvailable
+                                ? '${updatedProduct.name} is now visible in the marketplace.'
+                                : '${updatedProduct.name} is now hidden from the marketplace.',
                           ),
                         ),
                       );
