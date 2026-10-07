@@ -13,22 +13,25 @@ import '../features/alerts/presentation/alerts_page.dart';
 import '../features/settings/presentation/settings_page.dart';
 
 // ============================================================
-// IMPLEMENTED BUSINESS FEATURES
+// BUSINESS FEATURES
 // ============================================================
 
 import '../features/inventory/presentation/inventory_page.dart';
 import '../features/inventory/presentation/add_stock_page.dart';
+
 import '../features/order_requests/presentation/order_requests_page.dart';
 
-// ============================================================
-// ADD THESE IMPORTS WHEN THE PAGES EXIST
-// ============================================================
-//
+import '../features/waste_management/presentation/waste_management_page.dart';
 
-// import '../features/waste/presentation/waste_page.dart';
+// ============================================================
+// ADD THESE WHEN THE PAGES ARE READY
+// ============================================================
+
 // import '../features/maintenance/presentation/maintenance_page.dart';
 // import '../features/reports/presentation/reports_page.dart';
 // import '../features/user_management/presentation/user_management_page.dart';
+
+// If these pages already exist in your project, uncomment them:
 // import '../features/devices/presentation/add_device_page.dart';
 // import '../features/vaccine_batches/presentation/add_batch_page.dart';
 
@@ -82,7 +85,7 @@ class AppRoutes {
   static const String addStock = "/dashboard/inventory/add-stock";
 
   // ============================================================
-  // OTHER BUSINESS FEATURES
+  // BUSINESS FEATURES
   // ============================================================
 
   static const String orderRequests = "/dashboard/order-requests";
@@ -132,24 +135,44 @@ class AppRoutes {
     addStock: (_) => const AddStockPage(),
 
     // ----------------------------------------------------------
-    // OTHER BUSINESS FEATURES
+    // ORDER REQUESTS
     // ----------------------------------------------------------
     orderRequests: (_) => const OrderRequestsPage(),
 
-    // waste: (_) => const WastePage(),
+    // ----------------------------------------------------------
+    // WASTE MANAGEMENT
+    // ----------------------------------------------------------
+    waste: (_) => const WasteManagementPage(),
 
+    // ----------------------------------------------------------
+    // MAINTENANCE
+    // ----------------------------------------------------------
+
+    // Enable when MaintenancePage is created.
     // maintenance: (_) => const MaintenancePage(),
 
+    // ----------------------------------------------------------
+    // REPORTS
+    // ----------------------------------------------------------
+
+    // Enable when ReportsPage is created.
     // reports: (_) => const ReportsPage(),
 
+    // ----------------------------------------------------------
+    // USER MANAGEMENT
+    // ----------------------------------------------------------
+
+    // Enable when UserManagementPage is created.
     // userManagement: (_) => const UserManagementPage(),
 
     // ----------------------------------------------------------
     // ADD / CREATE PAGES
     // ----------------------------------------------------------
 
+    // Enable if AddDevicePage exists.
     // addDevice: (_) => const AddDevicePage(),
 
+    // Enable if AddBatchPage exists.
     // addBatch: (_) => const AddBatchPage(),
   };
 }
