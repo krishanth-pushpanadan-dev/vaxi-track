@@ -27,7 +27,7 @@ import '../features/waste_management/presentation/waste_management_page.dart';
 // ADD THESE WHEN THE PAGES ARE READY
 // ============================================================
 
-// import '../features/maintenance/presentation/maintenance_page.dart';
+import '../features/maintenance/presentation/maintenance_management_page.dart';
 // import '../features/reports/presentation/reports_page.dart';
 // import '../features/user_management/presentation/user_management_page.dart';
 
@@ -147,9 +147,7 @@ class AppRoutes {
     // ----------------------------------------------------------
     // MAINTENANCE
     // ----------------------------------------------------------
-
-    // Enable when MaintenancePage is created.
-    // maintenance: (_) => const MaintenancePage(),
+    maintenance: (_) => const MaintenanceManagementPage(),
 
     // ----------------------------------------------------------
     // REPORTS
