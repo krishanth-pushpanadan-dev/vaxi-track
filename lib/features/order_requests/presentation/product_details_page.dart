@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../model/product_model.dart';
 import 'create_order_page.dart';
-import '../presentation/supplier_profile_page.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   final Product product;

@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/app_colors.dart';
 import '../../alerts/services/alert_service.dart';
 import '../../authentication/services/auth_service.dart';
-import '../../authentication/models/user_model.dart';
 import '../model/waste_item_model.dart';
 import '../services/waste_ocr_service.dart';
 

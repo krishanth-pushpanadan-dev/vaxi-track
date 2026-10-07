@@ -8,8 +8,6 @@ import '../../authentication/services/auth_service.dart';
 
 import '../../order_requests/presentation/marketplace_page.dart';
 import '../../order_requests/presentation/supplier_products_page.dart';
-import '../../waste_management/presentation/waste_management_page.dart';
-
 import '../widgets/dashboard_header.dart';
 import '../widgets/section_header.dart';
 import '../widgets/stat_card.dart';
