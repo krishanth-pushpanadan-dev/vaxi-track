@@ -10,24 +10,35 @@ enum MaintenancePriority { low, medium, high, critical }
 
 enum MaintenanceStatus { scheduled, pending, inProgress, completed, cancelled }
 
+enum MaintenanceApprovalStatus { pending, approved, rejected }
+
 class MaintenanceItem {
   final String id;
   final String deviceId;
   final String deviceName;
   final String location;
+
   final MaintenanceType type;
   final MaintenancePriority priority;
   final MaintenanceStatus status;
+
+  final MaintenanceApprovalStatus approvalStatus;
+
   final String issueTitle;
   final String description;
+
   final String reportedBy;
   final String reportedByRole;
+
   final String? assignedTo;
+
   final DateTime reportedDate;
   final DateTime? scheduledDate;
   final DateTime? completedDate;
+
   final String? technicianNotes;
   final double? maintenanceCost;
+
   final bool requiresReview;
 
   const MaintenanceItem({
@@ -38,65 +49,114 @@ class MaintenanceItem {
     required this.type,
     required this.priority,
     required this.status,
+    required this.approvalStatus,
     required this.issueTitle,
     required this.description,
     required this.reportedBy,
     required this.reportedByRole,
-    this.assignedTo,
+    required this.assignedTo,
     required this.reportedDate,
-    this.scheduledDate,
-    this.completedDate,
-    this.technicianNotes,
-    this.maintenanceCost,
+    required this.scheduledDate,
+    required this.completedDate,
+    required this.technicianNotes,
+    required this.maintenanceCost,
     required this.requiresReview,
   });
 
-  // Display helpers
+  // ============================================================
+  // TYPE LABEL
+  // ============================================================
 
   String get typeLabel {
     switch (type) {
       case MaintenanceType.preventive:
-        return 'Preventive Maintenance';
+        return 'Preventive';
+
       case MaintenanceType.corrective:
-        return 'Corrective Maintenance';
+        return 'Corrective';
+
       case MaintenanceType.calibration:
         return 'Calibration';
+
       case MaintenanceType.inspection:
         return 'Inspection';
+
       case MaintenanceType.emergency:
-        return 'Emergency Maintenance';
+        return 'Emergency';
     }
   }
+
+  // ============================================================
+  // PRIORITY LABEL
+  // ============================================================
 
   String get priorityLabel {
     switch (priority) {
       case MaintenancePriority.low:
         return 'Low';
+
       case MaintenancePriority.medium:
         return 'Medium';
+
       case MaintenancePriority.high:
         return 'High';
+
       case MaintenancePriority.critical:
         return 'Critical';
     }
   }
 
+  // ============================================================
+  // STATUS LABEL
+  // ============================================================
+
   String get statusLabel {
     switch (status) {
       case MaintenanceStatus.scheduled:
         return 'Scheduled';
+
       case MaintenanceStatus.pending:
         return 'Pending';
+
       case MaintenanceStatus.inProgress:
         return 'In Progress';
+
       case MaintenanceStatus.completed:
         return 'Completed';
+
       case MaintenanceStatus.cancelled:
         return 'Cancelled';
     }
   }
 
-  bool get isCompleted => status == MaintenanceStatus.completed;
+  // ============================================================
+  // APPROVAL LABEL
+  // ============================================================
+
+  String get approvalStatusLabel {
+    switch (approvalStatus) {
+      case MaintenanceApprovalStatus.pending:
+        return 'Pending Review';
+
+      case MaintenanceApprovalStatus.approved:
+        return 'Approved';
+
+      case MaintenanceApprovalStatus.rejected:
+        return 'Rejected';
+    }
+  }
+
+  // ============================================================
+  // COMPLETED
+  // ============================================================
+
+  bool get isCompleted {
+    return status == MaintenanceStatus.completed;
+  }
+
+  // ============================================================
+  // OVERDUE
+  // ============================================================
 
   bool get isOverdue {
     if (scheduledDate == null || isCompleted) {
@@ -107,7 +167,41 @@ class MaintenanceItem {
         status != MaintenanceStatus.cancelled;
   }
 
-  bool get isCritical => priority == MaintenancePriority.critical;
+  // ============================================================
+  // CRITICAL
+  // ============================================================
+
+  bool get isCritical {
+    return priority == MaintenancePriority.critical;
+  }
+
+  // ============================================================
+  // NEEDS APPROVAL
+  // ============================================================
+
+  bool get needsApproval {
+    return approvalStatus == MaintenanceApprovalStatus.pending;
+  }
+
+  // ============================================================
+  // APPROVED
+  // ============================================================
+
+  bool get isApproved {
+    return approvalStatus == MaintenanceApprovalStatus.approved;
+  }
+
+  // ============================================================
+  // REJECTED
+  // ============================================================
+
+  bool get isRejected {
+    return approvalStatus == MaintenanceApprovalStatus.rejected;
+  }
+
+  // ============================================================
+  // COPY WITH
+  // ============================================================
 
   MaintenanceItem copyWith({
     String? id,
@@ -117,6 +211,7 @@ class MaintenanceItem {
     MaintenanceType? type,
     MaintenancePriority? priority,
     MaintenanceStatus? status,
+    MaintenanceApprovalStatus? approvalStatus,
     String? issueTitle,
     String? description,
     String? reportedBy,
@@ -137,6 +232,7 @@ class MaintenanceItem {
       type: type ?? this.type,
       priority: priority ?? this.priority,
       status: status ?? this.status,
+      approvalStatus: approvalStatus ?? this.approvalStatus,
       issueTitle: issueTitle ?? this.issueTitle,
       description: description ?? this.description,
       reportedBy: reportedBy ?? this.reportedBy,

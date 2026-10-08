@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:vaxi_track/features/authentication/models/role_permissions.dart';
 
 import '../../../app/app_colors.dart';
-import '../../authentication/models/role_permissions.dart';
 import '../../authentication/services/auth_service.dart';
 import '../model/maintenance_item_model.dart';
 
@@ -15,21 +15,9 @@ class MaintenanceDetailsPage extends StatefulWidget {
 }
 
 class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
-  // ============================================================
-  // SERVICES
-  // ============================================================
-
   final AuthService _authService = AuthService();
 
-  // ============================================================
-  // LOCAL DATA
-  // ============================================================
-
   late MaintenanceItem _maintenanceItem;
-
-  // ============================================================
-  // TECHNICIANS
-  // ============================================================
 
   final List<String> _technicians = [
     'Nuwan Silva',
@@ -38,20 +26,11 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     'Chamod Jayasinghe',
   ];
 
-  // ============================================================
-  // INIT
-  // ============================================================
-
   @override
   void initState() {
     super.initState();
-
     _maintenanceItem = widget.maintenanceItem;
   }
-
-  // ============================================================
-  // ROLE CHECK
-  // ============================================================
 
   bool get _canManageMaintenance {
     final user = _authService.currentUser;
@@ -63,599 +42,62 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     return RolePermissions.canManageMaintenance(user.role);
   }
 
-  // ============================================================
-  // STATUS COLOR
-  // ============================================================
-
-  Color _statusColor(MaintenanceStatus status) {
-    switch (status) {
-      case MaintenanceStatus.scheduled:
-        return Colors.blue;
-
-      case MaintenanceStatus.pending:
-        return Colors.orange;
-
-      case MaintenanceStatus.inProgress:
-        return Colors.deepPurple;
-
-      case MaintenanceStatus.completed:
-        return Colors.green;
-
-      case MaintenanceStatus.cancelled:
-        return Colors.grey;
-    }
-  }
-
-  // ============================================================
-  // PRIORITY COLOR
-  // ============================================================
-
-  Color _priorityColor(MaintenancePriority priority) {
-    switch (priority) {
-      case MaintenancePriority.low:
-        return Colors.green;
-
-      case MaintenancePriority.medium:
-        return Colors.blue;
-
-      case MaintenancePriority.high:
-        return Colors.orange;
-
-      case MaintenancePriority.critical:
-        return Colors.red;
-    }
-  }
-
-  // ============================================================
-  // TYPE ICON
-  // ============================================================
-
-  IconData _typeIcon(MaintenanceType type) {
-    switch (type) {
-      case MaintenanceType.preventive:
-        return Icons.event_repeat_rounded;
-
-      case MaintenanceType.corrective:
-        return Icons.build_rounded;
-
-      case MaintenanceType.calibration:
-        return Icons.tune_rounded;
-
-      case MaintenanceType.inspection:
-        return Icons.search_rounded;
-
-      case MaintenanceType.emergency:
-        return Icons.warning_rounded;
-    }
-  }
-
-  // ============================================================
-  // DATE FORMAT
-  // ============================================================
-
-  String _formatDate(DateTime? date) {
-    if (date == null) {
-      return 'Not specified';
-    }
-
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
-  }
-
-  String _formatDateTime(DateTime? date) {
-    if (date == null) {
-      return 'Not specified';
-    }
-
-    final hour = date.hour.toString().padLeft(2, '0');
-
-    final minute = date.minute.toString().padLeft(2, '0');
-
-    return '${_formatDate(date)} $hour:$minute';
-  }
-
-  // ============================================================
-  // RETURN UPDATED ITEM
-  // ============================================================
-
-  void _goBackWithResult() {
-    Navigator.pop(context, _maintenanceItem);
-  }
-
-  // ============================================================
-  // UPDATE STATUS
-  // ============================================================
-
-  Future<void> _updateStatus(MaintenanceStatus newStatus) async {
-    if (!_canManageMaintenance) {
-      _showMessage(
-        'You do not have permission to manage maintenance.',
-        isError: true,
-      );
-      return;
-    }
-
-    String actionText;
-
-    switch (newStatus) {
-      case MaintenanceStatus.inProgress:
-        actionText = 'start this maintenance task';
-        break;
-
-      case MaintenanceStatus.completed:
-        actionText = 'mark this maintenance as completed';
-        break;
-
-      case MaintenanceStatus.cancelled:
-        actionText = 'cancel this maintenance task';
-        break;
-
-      default:
-        actionText = 'update this maintenance';
-    }
-
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Confirm Action'),
-          content: Text('Are you sure you want to $actionText?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context, false);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-              },
-              child: const Text('Confirm'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) {
-      return;
-    }
-
-    final DateTime? completedDate = newStatus == MaintenanceStatus.completed
-        ? DateTime.now()
-        : _maintenanceItem.completedDate;
-
-    final MaintenanceItem updatedItem = _maintenanceItem.copyWith(
-      status: newStatus,
-      completedDate: completedDate,
-      requiresReview: false,
-    );
-
-    setState(() {
-      _maintenanceItem = updatedItem;
-    });
-
-    if (!mounted) {
-      return;
-    }
-
-    _showMessage('Maintenance status updated successfully.');
-  }
-
-  // ============================================================
-  // ASSIGN TECHNICIAN
-  // ============================================================
-
-  Future<void> _assignTechnician() async {
-    if (!_canManageMaintenance) {
-      _showMessage(
-        'You do not have permission to assign technicians.',
-        isError: true,
-      );
-      return;
-    }
-
-    String? selectedTechnician = _maintenanceItem.assignedTo;
-
-    final String? result = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Row(
-                children: [
-                  Icon(Icons.engineering_rounded, color: AppColors.primary),
-                  SizedBox(width: 10),
-                  Text('Assign Technician'),
-                ],
-              ),
-              content: DropdownButtonFormField<String>(
-                value: selectedTechnician,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: 'Technician',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                items: _technicians.map((technician) {
-                  return DropdownMenuItem<String>(
-                    value: technician,
-                    child: Text(technician),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setDialogState(() {
-                    selectedTechnician = value;
-                  });
-                },
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                  },
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: selectedTechnician == null
-                      ? null
-                      : () {
-                          Navigator.pop(dialogContext, selectedTechnician);
-                        },
-                  child: const Text('Assign'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result == null) {
-      return;
-    }
-
-    setState(() {
-      _maintenanceItem = _maintenanceItem.copyWith(
-        assignedTo: result,
-        requiresReview: false,
-      );
-    });
-
-    _showMessage('$result has been assigned successfully.');
-  }
-
-  // ============================================================
-  // EDIT TECHNICIAN NOTES
-  // ============================================================
-
-  Future<void> _editTechnicianNotes() async {
-    if (!_canManageMaintenance) {
-      _showMessage(
-        'You do not have permission to update technician notes.',
-        isError: true,
-      );
-      return;
-    }
-
-    final controller = TextEditingController(
-      text: _maintenanceItem.technicianNotes ?? '',
-    );
-
-    final String? notes = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.notes_rounded, color: AppColors.primary),
-              SizedBox(width: 10),
-              Text('Technician Notes'),
-            ],
-          ),
-          content: TextField(
-            controller: controller,
-            maxLines: 6,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: InputDecoration(
-              hintText: 'Enter maintenance notes...',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, controller.text.trim());
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    controller.dispose();
-
-    if (notes == null) {
-      return;
-    }
-
-    setState(() {
-      _maintenanceItem = _maintenanceItem.copyWith(
-        technicianNotes: notes.isEmpty ? null : notes,
-      );
-    });
-
-    _showMessage('Technician notes updated.');
-  }
-
-  // ============================================================
-  // EDIT MAINTENANCE COST
-  // ============================================================
-
-  Future<void> _editMaintenanceCost() async {
-    if (!_canManageMaintenance) {
-      _showMessage(
-        'You do not have permission to update maintenance cost.',
-        isError: true,
-      );
-      return;
-    }
-
-    final controller = TextEditingController(
-      text: _maintenanceItem.maintenanceCost?.toStringAsFixed(2) ?? '',
-    );
-
-    final String? cost = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.payments_rounded, color: AppColors.primary),
-              SizedBox(width: 10),
-              Text('Maintenance Cost'),
-            ],
-          ),
-          content: TextField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              labelText: 'Cost in LKR',
-              prefixText: 'Rs. ',
-              hintText: '2500.00',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, controller.text.trim());
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    controller.dispose();
-
-    if (cost == null) {
-      return;
-    }
-
-    final double? parsedCost = double.tryParse(cost);
-
-    if (cost.isNotEmpty && parsedCost == null) {
-      _showMessage('Please enter a valid cost.', isError: true);
-      return;
-    }
-
-    setState(() {
-      _maintenanceItem = _maintenanceItem.copyWith(
-        maintenanceCost: cost.isEmpty ? null : parsedCost,
-      );
-    });
-
-    _showMessage('Maintenance cost updated.');
-  }
-
-  // ============================================================
-  // SNACKBAR
-  // ============================================================
-
-  void _showMessage(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : AppColors.primary,
-      ),
-    );
-  }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
-    final item = _maintenanceItem;
-
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          return;
-        }
+        if (didPop) return;
 
         Navigator.pop(context, _maintenanceItem);
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Maintenance Details'),
-          centerTitle: true,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _goBackWithResult,
-          ),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
         ),
-
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(20),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ==================================================
-              // HEADER
-              // ==================================================
-              _buildHeader(item),
-
-              const SizedBox(height: 20),
-
-              // ==================================================
-              // STATUS
-              // ==================================================
-              _buildStatusSection(item),
-
-              const SizedBox(height: 20),
-
-              // ==================================================
-              // DEVICE INFORMATION
-              // ==================================================
-              _buildSection(
-                title: 'Device Information',
-                icon: Icons.devices_rounded,
-                children: [
-                  _buildInfoRow(
-                    'Device',
-                    item.deviceName,
-                    Icons.memory_rounded,
-                  ),
-                  _buildInfoRow('Device ID', item.deviceId, Icons.tag_rounded),
-                  _buildInfoRow(
-                    'Location',
-                    item.location,
-                    Icons.location_on_rounded,
-                  ),
-                ],
-              ),
-
+              _buildHeaderCard(),
               const SizedBox(height: 16),
 
-              // ==================================================
-              // MAINTENANCE INFORMATION
-              // ==================================================
-              _buildSection(
-                title: 'Maintenance Information',
-                icon: Icons.build_circle_rounded,
-                children: [
-                  _buildInfoRow(
-                    'Issue',
-                    item.issueTitle,
-                    Icons.report_problem_rounded,
-                  ),
-                  _buildInfoRow('Type', item.typeLabel, _typeIcon(item.type)),
-                  _buildInfoRow(
-                    'Priority',
-                    item.priorityLabel,
-                    Icons.flag_rounded,
-                  ),
-                  _buildInfoRow(
-                    'Reported Date',
-                    _formatDateTime(item.reportedDate),
-                    Icons.calendar_today_rounded,
-                  ),
-                  _buildInfoRow(
-                    'Scheduled Date',
-                    _formatDate(item.scheduledDate),
-                    Icons.event_rounded,
-                  ),
-                  _buildInfoRow(
-                    'Completed Date',
-                    _formatDateTime(item.completedDate),
-                    Icons.check_circle_outline_rounded,
-                  ),
-                ],
-              ),
-
+              _buildApprovalSection(),
               const SizedBox(height: 16),
 
-              // ==================================================
-              // DESCRIPTION
-              // ==================================================
-              _buildSection(
-                title: 'Description',
-                icon: Icons.description_rounded,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      item.description,
-                      style: const TextStyle(fontSize: 14, height: 1.5),
-                    ),
-                  ),
-                ],
-              ),
-
+              _buildStatusPrioritySection(),
               const SizedBox(height: 16),
 
-              // ==================================================
-              // ASSIGNMENT
-              // ==================================================
-              _buildAssignmentSection(item),
-
+              _buildDeviceSection(),
               const SizedBox(height: 16),
 
-              // ==================================================
-              // ADDITIONAL INFORMATION
-              // ==================================================
-              _buildAdditionalInformation(item),
-
+              _buildMaintenanceInformationSection(),
               const SizedBox(height: 16),
 
-              // ==================================================
-              // TECHNICIAN NOTES
-              // ==================================================
-              _buildTechnicianNotes(item),
+              _buildDescriptionSection(),
+              const SizedBox(height: 16),
 
-              // ==================================================
-              // OVERDUE WARNING
-              // ==================================================
-              if (item.isOverdue) ...[
-                const SizedBox(height: 16),
-                _buildOverdueWarning(),
-              ],
+              _buildAssignmentSection(),
+              const SizedBox(height: 16),
 
-              // ==================================================
-              // MANAGEMENT ACTIONS
-              // ==================================================
+              _buildAdditionalInformationSection(),
+              const SizedBox(height: 16),
+
+              _buildTechnicianNotesSection(),
+              const SizedBox(height: 16),
+
+              if (_maintenanceItem.isOverdue) _buildOverdueWarning(),
+
               if (_canManageMaintenance) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 _buildManagementActions(),
               ],
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -667,199 +109,384 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   // HEADER
   // ============================================================
 
-  Widget _buildHeader(MaintenanceItem item) {
+  Widget _buildHeaderCard() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: AppColors.primaryGradient,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.build_circle_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _maintenanceItem.id,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _maintenanceItem.issueTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            _maintenanceItem.deviceName,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              const Icon(
+                Icons.location_on_outlined,
+                color: Colors.white70,
+                size: 16,
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  _maintenanceItem.location,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // APPROVAL SECTION
+  // ============================================================
+
+  Widget _buildApprovalSection() {
+    Color statusColor;
+
+    switch (_maintenanceItem.approvalStatus) {
+      case MaintenanceApprovalStatus.pending:
+        statusColor = Colors.orange;
+        break;
+      case MaintenanceApprovalStatus.approved:
+        statusColor = Colors.green;
+        break;
+      case MaintenanceApprovalStatus.rejected:
+        statusColor = Colors.red;
+        break;
+    }
+
+    return _buildSectionCard(
+      title: 'Approval Status',
+      icon: Icons.verified_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 56,
-            height: 56,
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(16),
+              color: statusColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: statusColor.withValues(alpha: 0.25)),
             ),
-            child: Icon(_typeIcon(item.type), color: Colors.white, size: 30),
-          ),
-
-          const SizedBox(width: 14),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  item.issueTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                Icon(_getApprovalIcon(), color: statusColor, size: 25),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _maintenanceItem.approvalStatusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _getApprovalDescription(),
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  item.id,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
             ),
           ),
+
+          if (_canManageMaintenance && _maintenanceItem.needsApproval) ...[
+            const SizedBox(height: 14),
+
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _rejectMaintenance,
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    label: const Text('Reject'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _approveMaintenance,
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: const Text('Approve'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  IconData _getApprovalIcon() {
+    switch (_maintenanceItem.approvalStatus) {
+      case MaintenanceApprovalStatus.pending:
+        return Icons.pending_actions_rounded;
+      case MaintenanceApprovalStatus.approved:
+        return Icons.check_circle_rounded;
+      case MaintenanceApprovalStatus.rejected:
+        return Icons.cancel_rounded;
+    }
+  }
+
+  String _getApprovalDescription() {
+    switch (_maintenanceItem.approvalStatus) {
+      case MaintenanceApprovalStatus.pending:
+        return 'This maintenance request is waiting for approval.';
+      case MaintenanceApprovalStatus.approved:
+        return 'This maintenance request has been approved.';
+      case MaintenanceApprovalStatus.rejected:
+        return 'This maintenance request has been rejected.';
+    }
+  }
+
+  // ============================================================
+  // STATUS + PRIORITY
+  // ============================================================
+
+  Widget _buildStatusPrioritySection() {
+    return _buildSectionCard(
+      title: 'Status & Priority',
+      icon: Icons.flag_outlined,
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildInfoChip(
+              label: _maintenanceItem.statusLabel,
+              color: _getStatusColor(_maintenanceItem.status),
+              icon: Icons.sync_rounded,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildInfoChip(
+              label: _maintenanceItem.priorityLabel,
+              color: _getPriorityColor(_maintenanceItem.priority),
+              icon: Icons.priority_high_rounded,
+            ),
+          ),
         ],
       ),
     );
   }
 
   // ============================================================
-  // STATUS SECTION
+  // DEVICE
   // ============================================================
 
-  Widget _buildStatusSection(MaintenanceItem item) {
-    final statusColor = _statusColor(item.status);
-
-    final priorityColor = _priorityColor(item.priority);
-
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatusCard(
-            title: 'Status',
-            value: item.statusLabel,
-            color: statusColor,
-            icon: Icons.sync_rounded,
+  Widget _buildDeviceSection() {
+    return _buildSectionCard(
+      title: 'Device Information',
+      icon: Icons.memory_rounded,
+      child: Column(
+        children: [
+          _buildDetailRow(
+            icon: Icons.devices_other_rounded,
+            label: 'Device',
+            value: _maintenanceItem.deviceName,
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatusCard(
-            title: 'Priority',
-            value: item.priorityLabel,
-            color: priorityColor,
-            icon: Icons.flag_rounded,
+          _buildDetailRow(
+            icon: Icons.tag_rounded,
+            label: 'Device ID',
+            value: _maintenanceItem.deviceId,
           ),
-        ),
-      ],
+          _buildDetailRow(
+            icon: Icons.location_on_outlined,
+            label: 'Location',
+            value: _maintenanceItem.location,
+          ),
+        ],
+      ),
     );
   }
 
   // ============================================================
-  // STATUS CARD
+  // MAINTENANCE INFORMATION
   // ============================================================
 
-  Widget _buildStatusCard({
-    required String title,
-    required String value,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+  Widget _buildMaintenanceInformationSection() {
+    return _buildSectionCard(
+      title: 'Maintenance Information',
+      icon: Icons.build_outlined,
+      child: Column(
+        children: [
+          _buildDetailRow(
+            icon: Icons.category_outlined,
+            label: 'Type',
+            value: _maintenanceItem.typeLabel,
+          ),
+          _buildDetailRow(
+            icon: Icons.calendar_today_outlined,
+            label: 'Reported Date',
+            value: _formatDate(_maintenanceItem.reportedDate),
+          ),
+          if (_maintenanceItem.scheduledDate != null)
+            _buildDetailRow(
+              icon: Icons.event_outlined,
+              label: 'Scheduled Date',
+              value: _formatDate(_maintenanceItem.scheduledDate!),
+            ),
+          if (_maintenanceItem.completedDate != null)
+            _buildDetailRow(
+              icon: Icons.task_alt_rounded,
+              label: 'Completed Date',
+              value: _formatDate(_maintenanceItem.completedDate!),
+            ),
+        ],
       ),
+    );
+  }
+
+  // ============================================================
+  // DESCRIPTION
+  // ============================================================
+
+  Widget _buildDescriptionSection() {
+    return _buildSectionCard(
+      title: 'Description',
+      icon: Icons.description_outlined,
+      child: Text(
+        _maintenanceItem.description,
+        style: TextStyle(
+          color: Colors.grey.shade700,
+          fontSize: 14,
+          height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  // ============================================================
+  // ASSIGNMENT
+  // ============================================================
+
+  Widget _buildAssignmentSection() {
+    return _buildSectionCard(
+      title: 'Technician Assignment',
+      icon: Icons.engineering_outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                child: Icon(Icons.person_rounded, color: AppColors.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _maintenanceItem.assignedTo ?? 'Not Assigned',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      _maintenanceItem.assignedTo == null
+                          ? 'A technician has not been assigned.'
+                          : 'Assigned technician',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // ASSIGNMENT SECTION
-  // ============================================================
-
-  Widget _buildAssignmentSection(MaintenanceItem item) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.engineering_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Expanded(
-                child: Text(
-                  'Assignment',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              if (_canManageMaintenance)
-                IconButton(
-                  onPressed: _assignTechnician,
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Assign technician',
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          _buildInfoRow('Reported By', item.reportedBy, Icons.person_rounded),
-
-          _buildInfoRow(
-            'Reporter Role',
-            item.reportedByRole,
-            Icons.badge_rounded,
-          ),
-
-          _buildInfoRow(
-            'Technician',
-            item.assignedTo ?? 'Not assigned',
-            Icons.engineering_rounded,
           ),
 
           if (_canManageMaintenance) ...[
-            const SizedBox(height: 4),
-
+            const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: _assignTechnician,
-                icon: const Icon(Icons.person_add_alt_1),
+                onPressed: _showTechnicianSelection,
+                icon: const Icon(Icons.person_add_alt_1_rounded),
                 label: Text(
-                  item.assignedTo == null
+                  _maintenanceItem.assignedTo == null
                       ? 'Assign Technician'
                       : 'Change Technician',
                 ),
@@ -875,69 +502,29 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   // ADDITIONAL INFORMATION
   // ============================================================
 
-  Widget _buildAdditionalInformation(MaintenanceItem item) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildAdditionalInformationSection() {
+    return _buildSectionCard(
+      title: 'Additional Information',
+      icon: Icons.info_outline_rounded,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(
-                Icons.info_outline_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Additional Information',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
+          _buildDetailRow(
+            icon: Icons.person_outline_rounded,
+            label: 'Reported By',
+            value: _maintenanceItem.reportedBy,
           ),
-
-          const SizedBox(height: 14),
-
-          _buildInfoRow(
-            'Cost',
-            item.maintenanceCost == null
-                ? 'Not specified'
-                : 'Rs. ${item.maintenanceCost!.toStringAsFixed(2)}',
-            Icons.payments_rounded,
+          _buildDetailRow(
+            icon: Icons.badge_outlined,
+            label: 'Reporter Role',
+            value: _maintenanceItem.reportedByRole,
           ),
-
-          _buildInfoRow(
-            'Requires Review',
-            item.requiresReview ? 'Yes' : 'No',
-            item.requiresReview
-                ? Icons.warning_rounded
-                : Icons.verified_rounded,
+          _buildDetailRow(
+            icon: Icons.attach_money_rounded,
+            label: 'Maintenance Cost',
+            value: _maintenanceItem.maintenanceCost == null
+                ? 'Not available'
+                : 'Rs. ${_maintenanceItem.maintenanceCost!.toStringAsFixed(2)}',
           ),
-
-          if (_canManageMaintenance)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _editMaintenanceCost,
-                icon: const Icon(Icons.edit_outlined),
-                label: Text(
-                  item.maintenanceCost == null
-                      ? 'Add Maintenance Cost'
-                      : 'Edit Maintenance Cost',
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -947,75 +534,30 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   // TECHNICIAN NOTES
   // ============================================================
 
-  Widget _buildTechnicianNotes(MaintenanceItem item) {
-    final hasNotes =
-        item.technicianNotes != null && item.technicianNotes!.trim().isNotEmpty;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildTechnicianNotesSection() {
+    return _buildSectionCard(
+      title: 'Technician Notes',
+      icon: Icons.notes_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.notes_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-
-              const SizedBox(width: 8),
-
-              const Expanded(
-                child: Text(
-                  'Technician Notes',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              if (_canManageMaintenance)
-                IconButton(
-                  onPressed: _editTechnicianNotes,
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Edit notes',
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          if (hasNotes)
-            Text(
-              item.technicianNotes!,
-              style: const TextStyle(fontSize: 14, height: 1.5),
-            )
-          else
-            Text(
-              'No technician notes have been added yet.',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          Text(
+            _maintenanceItem.technicianNotes?.isNotEmpty == true
+                ? _maintenanceItem.technicianNotes!
+                : 'No technician notes available.',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 14,
+              height: 1.5,
             ),
+          ),
 
           if (_canManageMaintenance) ...[
             const SizedBox(height: 12),
-
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _editTechnicianNotes,
-                icon: const Icon(Icons.note_add_outlined),
-                label: Text(hasNotes ? 'Edit Notes' : 'Add Technician Notes'),
-              ),
+            OutlinedButton.icon(
+              onPressed: _editTechnicianNotes,
+              icon: const Icon(Icons.edit_note_rounded),
+              label: const Text('Edit Notes'),
             ),
           ],
         ],
@@ -1024,23 +566,334 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
   }
 
   // ============================================================
-  // SECTION
+  // OVERDUE WARNING
   // ============================================================
 
-  Widget _buildSection({
+  Widget _buildOverdueWarning() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.25)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, color: Colors.red),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Maintenance Overdue',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'The scheduled maintenance date has passed and this task has not been completed.',
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // MANAGEMENT ACTIONS
+  // ============================================================
+
+  Widget _buildManagementActions() {
+    return _buildSectionCard(
+      title: 'Management Actions',
+      icon: Icons.admin_panel_settings_outlined,
+      child: Column(
+        children: [
+          if (_maintenanceItem.approvalStatus ==
+              MaintenanceApprovalStatus.approved) ...[
+            if (_maintenanceItem.status == MaintenanceStatus.pending)
+              _actionButton(
+                label: 'Start Maintenance',
+                icon: Icons.play_arrow_rounded,
+                color: AppColors.primary,
+                onPressed: _startMaintenance,
+              ),
+
+            if (_maintenanceItem.status == MaintenanceStatus.inProgress)
+              _actionButton(
+                label: 'Mark as Completed',
+                icon: Icons.check_circle_outline_rounded,
+                color: Colors.green,
+                onPressed: _completeMaintenance,
+              ),
+          ],
+
+          if (_maintenanceItem.status != MaintenanceStatus.completed &&
+              _maintenanceItem.status != MaintenanceStatus.cancelled &&
+              _maintenanceItem.approvalStatus !=
+                  MaintenanceApprovalStatus.rejected)
+            _actionButton(
+              label: 'Cancel Maintenance',
+              icon: Icons.cancel_outlined,
+              color: Colors.red,
+              onPressed: _cancelMaintenance,
+            ),
+
+          if (_maintenanceItem.approvalStatus ==
+                  MaintenanceApprovalStatus.rejected &&
+              _maintenanceItem.status != MaintenanceStatus.cancelled)
+            _actionButton(
+              label: 'Cancel Rejected Request',
+              icon: Icons.cancel_outlined,
+              color: Colors.red,
+              onPressed: _cancelMaintenance,
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // APPROVE
+  // ============================================================
+
+  Future<void> _approveMaintenance() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Approve Maintenance?',
+      message: 'Are you sure you want to approve this maintenance request?',
+      confirmText: 'Approve',
+      confirmColor: Colors.green,
+    );
+
+    if (!confirmed) return;
+
+    setState(() {
+      _maintenanceItem = _maintenanceItem.copyWith(
+        approvalStatus: MaintenanceApprovalStatus.approved,
+        requiresReview: false,
+      );
+    });
+
+    _showMessage('Maintenance request approved successfully.', Colors.green);
+  }
+
+  // ============================================================
+  // REJECT
+  // ============================================================
+
+  Future<void> _rejectMaintenance() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Reject Maintenance?',
+      message: 'Are you sure you want to reject this maintenance request?',
+      confirmText: 'Reject',
+      confirmColor: Colors.red,
+    );
+
+    if (!confirmed) return;
+
+    setState(() {
+      _maintenanceItem = _maintenanceItem.copyWith(
+        approvalStatus: MaintenanceApprovalStatus.rejected,
+        requiresReview: false,
+      );
+    });
+
+    _showMessage('Maintenance request rejected.', Colors.red);
+  }
+
+  // ============================================================
+  // START
+  // ============================================================
+
+  void _startMaintenance() {
+    setState(() {
+      _maintenanceItem = _maintenanceItem.copyWith(
+        status: MaintenanceStatus.inProgress,
+      );
+    });
+
+    _showMessage('Maintenance started.', AppColors.primary);
+  }
+
+  // ============================================================
+  // COMPLETE
+  // ============================================================
+
+  Future<void> _completeMaintenance() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Complete Maintenance?',
+      message: 'Mark this maintenance task as completed?',
+      confirmText: 'Complete',
+      confirmColor: Colors.green,
+    );
+
+    if (!confirmed) return;
+
+    setState(() {
+      _maintenanceItem = _maintenanceItem.copyWith(
+        status: MaintenanceStatus.completed,
+        completedDate: DateTime.now(),
+      );
+    });
+
+    _showMessage('Maintenance marked as completed.', Colors.green);
+  }
+
+  // ============================================================
+  // CANCEL
+  // ============================================================
+
+  Future<void> _cancelMaintenance() async {
+    final confirmed = await _showConfirmationDialog(
+      title: 'Cancel Maintenance?',
+      message: 'Are you sure you want to cancel this maintenance task?',
+      confirmText: 'Cancel Maintenance',
+      confirmColor: Colors.red,
+    );
+
+    if (!confirmed) return;
+
+    setState(() {
+      _maintenanceItem = _maintenanceItem.copyWith(
+        status: MaintenanceStatus.cancelled,
+      );
+    });
+
+    _showMessage('Maintenance task cancelled.', Colors.red);
+  }
+
+  // ============================================================
+  // TECHNICIAN SELECTION
+  // ============================================================
+
+  void _showTechnicianSelection() {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Select Technician',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                ..._technicians.map(
+                  (technician) => ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      child: Icon(Icons.person, color: AppColors.primary),
+                    ),
+                    title: Text(technician),
+                    trailing: _maintenanceItem.assignedTo == technician
+                        ? Icon(Icons.check_circle, color: AppColors.primary)
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        _maintenanceItem = _maintenanceItem.copyWith(
+                          assignedTo: technician,
+                        );
+                      });
+
+                      Navigator.pop(context);
+
+                      _showMessage(
+                        '$technician assigned successfully.',
+                        AppColors.primary,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ============================================================
+  // TECHNICIAN NOTES EDIT
+  // ============================================================
+
+  Future<void> _editTechnicianNotes() async {
+    final controller = TextEditingController(
+      text: _maintenanceItem.technicianNotes ?? '',
+    );
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Technician Notes'),
+          content: TextField(
+            controller: controller,
+            maxLines: 5,
+            decoration: const InputDecoration(
+              hintText: 'Enter technician notes...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, controller.text.trim());
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (result == null) return;
+
+    setState(() {
+      _maintenanceItem = _maintenanceItem.copyWith(technicianNotes: result);
+    });
+
+    _showMessage('Technician notes updated.', AppColors.primary);
+  }
+
+  // ============================================================
+  // COMMON UI
+  // ============================================================
+
+  Widget _buildSectionCard({
     required String title,
     required IconData icon,
-    required List<Widget> children,
+    required Widget child,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -1061,37 +914,32 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          ...children,
+          child,
         ],
       ),
     );
   }
 
-  // ============================================================
-  // INFO ROW
-  // ============================================================
-
-  Widget _buildInfoRow(String label, String value, IconData icon) {
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 19, color: Colors.grey.shade600),
-
+          Icon(icon, size: 19, color: Colors.grey.shade500),
           const SizedBox(width: 10),
-
           SizedBox(
-            width: 115,
+            width: 105,
             child: Text(
               label,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
             ),
           ),
-
           Expanded(
             child: Text(
               value,
@@ -1103,26 +951,30 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     );
   }
 
-  // ============================================================
-  // OVERDUE WARNING
-  // ============================================================
-
-  Widget _buildOverdueWarning() {
+  Widget _buildInfoChip({
+    required String label,
+    required Color color,
+    required IconData icon,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.20)),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded, color: Colors.red),
-          SizedBox(width: 12),
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 7),
           Expanded(
             child: Text(
-              'This maintenance task is overdue and requires attention.',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
             ),
           ),
         ],
@@ -1130,90 +982,122 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
     );
   }
 
-  // ============================================================
-  // MANAGEMENT ACTIONS
-  // ============================================================
-
-  Widget _buildManagementActions() {
-    final status = _maintenanceItem.status;
-
-    if (status == MaintenanceStatus.completed ||
-        status == MaintenanceStatus.cancelled) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Maintenance Actions',
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-        ),
-
-        const SizedBox(height: 12),
-
-        // ------------------------------------------------------
-        // START
-        // ------------------------------------------------------
-        if (status == MaintenanceStatus.pending ||
-            status == MaintenanceStatus.scheduled)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _updateStatus(MaintenanceStatus.inProgress);
-              },
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Start Maintenance'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-
-        // ------------------------------------------------------
-        // COMPLETE
-        // ------------------------------------------------------
-        if (status == MaintenanceStatus.inProgress)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _updateStatus(MaintenanceStatus.completed);
-              },
-              icon: const Icon(Icons.check_circle_rounded),
-              label: const Text('Mark as Completed'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-
-        const SizedBox(height: 10),
-
-        // ------------------------------------------------------
-        // CANCEL
-        // ------------------------------------------------------
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () {
-              _updateStatus(MaintenanceStatus.cancelled);
-            },
-            icon: const Icon(Icons.cancel_outlined),
-            label: const Text('Cancel Maintenance'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: const BorderSide(color: Colors.red),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
+  Widget _actionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 13),
           ),
         ),
-      ],
+      ),
     );
+  }
+
+  // ============================================================
+  // CONFIRMATION DIALOG
+  // ============================================================
+
+  Future<bool> _showConfirmationDialog({
+    required String title,
+    required String message,
+    required String confirmText,
+    required Color confirmColor,
+  }) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('No'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: confirmColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(confirmText),
+            ),
+          ],
+        );
+      },
+    );
+
+    return result ?? false;
+  }
+
+  // ============================================================
+  // MESSAGE
+  // ============================================================
+
+  void _showMessage(String message, Color color) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  Color _getStatusColor(MaintenanceStatus status) {
+    switch (status) {
+      case MaintenanceStatus.scheduled:
+        return Colors.blue;
+      case MaintenanceStatus.pending:
+        return Colors.orange;
+      case MaintenanceStatus.inProgress:
+        return AppColors.primary;
+      case MaintenanceStatus.completed:
+        return Colors.green;
+      case MaintenanceStatus.cancelled:
+        return Colors.red;
+    }
+  }
+
+  Color _getPriorityColor(MaintenancePriority priority) {
+    switch (priority) {
+      case MaintenancePriority.low:
+        return Colors.green;
+      case MaintenancePriority.medium:
+        return Colors.blue;
+      case MaintenancePriority.high:
+        return Colors.orange;
+      case MaintenancePriority.critical:
+        return Colors.red;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
   }
 }
