@@ -6,6 +6,9 @@ import '../../authentication/models/user_model.dart';
 import '../../authentication/models/role_permissions.dart';
 import '../../authentication/services/auth_service.dart';
 
+import '../../alerts/data/alert_dummy_data.dart';
+import '../../alerts/models/alert_model.dart' as alert_model;
+
 import '../../order_requests/presentation/marketplace_page.dart';
 import '../../order_requests/presentation/supplier_products_page.dart';
 import '../widgets/dashboard_header.dart';
@@ -39,6 +42,43 @@ class _DashboardPageState extends State<DashboardPage> {
 
   UserModel? get currentUser => _authService.currentUser;
 
+  // Shared alert data drives the dashboard badge, overview, and recent alerts.
+  int get _activeAlertCount => alertList
+      .where((alert) => alert.status == alert_model.AlertStatus.active)
+      .length;
+
+  int get _criticalAlertCount => alertList
+      .where(
+        (alert) =>
+            alert.status == alert_model.AlertStatus.active &&
+            alert.severity == alert_model.AlertSeverity.critical,
+      )
+      .length;
+
+  int get _unreadAlertCount => alertList
+      .where(
+        (alert) =>
+            alert.status == alert_model.AlertStatus.active &&
+            !alert.acknowledged,
+      )
+      .length;
+
+  List<alert_model.AlertModel> get _recentActiveAlerts => alertList
+      .where((alert) => alert.status == alert_model.AlertStatus.active)
+      .take(3)
+      .toList();
+
+  AlertSeverity _dashboardSeverity(alert_model.AlertSeverity severity) {
+    switch (severity) {
+      case alert_model.AlertSeverity.critical:
+        return AlertSeverity.critical;
+      case alert_model.AlertSeverity.warning:
+        return AlertSeverity.warning;
+      case alert_model.AlertSeverity.info:
+        return AlertSeverity.info;
+    }
+  }
+
   // ================================================================
   // REFRESH
   // ================================================================
@@ -47,6 +87,8 @@ class _DashboardPageState extends State<DashboardPage> {
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
+
+    setState(() {});
 
     ScaffoldMessenger.of(
       context,
@@ -252,7 +294,7 @@ class _DashboardPageState extends State<DashboardPage> {
               DashboardHeader(
                 userName: user?.name ?? "User",
                 userRole: user?.roleName ?? "User",
-                notificationCount: 3,
+                notificationCount: _unreadAlertCount,
 
                 onMenuPressed: () {
                   _scaffoldKey.currentState?.openDrawer();
@@ -698,10 +740,12 @@ class _DashboardPageState extends State<DashboardPage> {
               // ----------------------------------------------------
               StatCard(
                 title: "Alerts",
-                value: "3",
-                subtitle: "Critical",
+                value: _activeAlertCount.toString(),
+                subtitle: "$_criticalAlertCount Critical",
                 icon: Icons.warning_amber,
-                status: StatCardStatus.danger,
+                status: _criticalAlertCount > 0
+                    ? StatCardStatus.danger
+                    : StatCardStatus.success,
 
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.alerts);
@@ -1076,51 +1120,43 @@ class _DashboardPageState extends State<DashboardPage> {
   // ================================================================
 
   Widget _buildAlerts() {
+    final recentAlerts = _recentActiveAlerts;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-
       child: Column(
         children: [
           SectionHeader(
             icon: Icons.notifications_active,
             title: "Recent Alerts",
-            subtitle: "3 active alerts",
+            subtitle: "$_activeAlertCount active alerts",
             actionText: "See All",
-
             onActionPressed: () {
               Navigator.pushNamed(context, AppRoutes.alerts);
             },
           ),
-
-          AlertCard(
-            title: "High Temperature",
-            deviceName: "Cold Storage Unit A",
-            location: "Colombo General Hospital",
-            time: "2 min ago",
-            severity: AlertSeverity.critical,
-            acknowledged: false,
-            onTap: () {},
-          ),
-
-          AlertCard(
-            title: "Battery Low",
-            deviceName: "ESP32 Device 04",
-            location: "Kandy MOH",
-            time: "15 min ago",
-            severity: AlertSeverity.warning,
-            acknowledged: false,
-            onTap: () {},
-          ),
-
-          AlertCard(
-            title: "Door Open",
-            deviceName: "Storage Room 2",
-            location: "Galle District Hospital",
-            time: "48 min ago",
-            severity: AlertSeverity.info,
-            acknowledged: true,
-            onTap: () {},
-          ),
+          if (recentAlerts.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                "No active alerts. All systems are operating normally.",
+                textAlign: TextAlign.center,
+              ),
+            )
+          else
+            ...recentAlerts.map(
+              (alert) => AlertCard(
+                title: alert.title,
+                deviceName: alert.deviceName,
+                location: alert.location,
+                time: alert.time,
+                severity: _dashboardSeverity(alert.severity),
+                acknowledged: alert.acknowledged,
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.alerts);
+                },
+              ),
+            ),
         ],
       ),
     );

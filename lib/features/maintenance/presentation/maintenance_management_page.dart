@@ -5,6 +5,7 @@ import '../../authentication/models/role_permissions.dart';
 import '../../authentication/services/auth_service.dart';
 import '../data/maintenance_dummy_data.dart';
 import '../model/maintenance_item_model.dart';
+import '../services/maintenance_alert_service.dart';
 import '../presentation/report_maintenance_page.dart';
 import '../presentation/maintenance_details_page.dart';
 
@@ -38,6 +39,7 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
   MaintenanceStatus? selectedStatus;
   MaintenancePriority? selectedPriority;
   MaintenanceType? selectedType;
+  MaintenanceApprovalStatus? selectedApprovalStatus;
 
   // ============================================================
   // ROLE CHECK
@@ -72,6 +74,7 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
     super.initState();
 
     _maintenanceItems = List<MaintenanceItem>.from(maintenanceList);
+    MaintenanceAlertService.syncMaintenanceAlerts(_maintenanceItems);
   }
 
   // ============================================================
@@ -97,7 +100,15 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
 
       final matchesType = selectedType == null || item.type == selectedType;
 
-      return matchesSearch && matchesStatus && matchesPriority && matchesType;
+      final matchesApproval =
+          selectedApprovalStatus == null ||
+          item.approvalStatus == selectedApprovalStatus;
+
+      return matchesSearch &&
+          matchesStatus &&
+          matchesPriority &&
+          matchesType &&
+          matchesApproval;
     }).toList();
   }
 
@@ -126,6 +137,9 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
   int get overdueCount =>
       _maintenanceItems.where((item) => item.isOverdue).length;
 
+  int get pendingApprovalCount =>
+      _maintenanceItems.where((item) => item.needsApproval).length;
+
   // ============================================================
   // REFRESH
   // ============================================================
@@ -139,6 +153,7 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
 
     setState(() {
       _maintenanceItems = List<MaintenanceItem>.from(maintenanceList);
+      MaintenanceAlertService.syncMaintenanceAlerts(_maintenanceItems);
     });
   }
 
@@ -307,6 +322,54 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
   }
 
   // ============================================================
+  // APPROVAL STATUS CHIP
+  // ============================================================
+
+  Widget _buildApprovalBadge(MaintenanceItem item) {
+    late Color color;
+    late IconData icon;
+
+    switch (item.approvalStatus) {
+      case MaintenanceApprovalStatus.pending:
+        color = Colors.orange;
+        icon = Icons.pending_actions_rounded;
+        break;
+      case MaintenanceApprovalStatus.approved:
+        color = Colors.green;
+        icon = Icons.check_circle_outline_rounded;
+        break;
+      case MaintenanceApprovalStatus.rejected:
+        color = Colors.red;
+        icon = Icons.cancel_outlined;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 5),
+          Text(
+            item.approvalStatusLabel,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
   // STATUS LABEL
   // ============================================================
 
@@ -391,6 +454,8 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
     setState(() {
       _maintenanceItems[index] = updatedMaintenance;
     });
+
+    MaintenanceAlertService.syncMaintenanceAlerts(_maintenanceItems);
   }
 
   // ============================================================
@@ -513,6 +578,16 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
 
                   _buildPriorityChip(item.priority),
                 ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // ------------------------------------------------
+              // APPROVAL STATUS
+              // ------------------------------------------------
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _buildApprovalBadge(item),
               ),
 
               const SizedBox(height: 12),
@@ -689,6 +764,7 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
     MaintenancePriority? tempPriority = selectedPriority;
 
     MaintenanceType? tempType = selectedType;
+    MaintenanceApprovalStatus? tempApprovalStatus = selectedApprovalStatus;
 
     showModalBottomSheet(
       context: context,
@@ -801,6 +877,31 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
                       }).toList(),
                     ),
 
+                    const SizedBox(height: 20),
+
+                    const Text(
+                      "Approval Status",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: MaintenanceApprovalStatus.values.map((status) {
+                        return ChoiceChip(
+                          label: Text(_approvalStatusLabel(status)),
+                          selected: tempApprovalStatus == status,
+                          onSelected: (selected) {
+                            setSheetState(() {
+                              tempApprovalStatus = selected ? status : null;
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+
                     const SizedBox(height: 25),
 
                     SizedBox(
@@ -814,6 +915,7 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
                             selectedPriority = tempPriority;
 
                             selectedType = tempType;
+                            selectedApprovalStatus = tempApprovalStatus;
                           });
 
                           Navigator.pop(sheetContext);
@@ -839,6 +941,21 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
         );
       },
     );
+  }
+
+  // ============================================================
+  // APPROVAL STATUS LABEL
+  // ============================================================
+
+  String _approvalStatusLabel(MaintenanceApprovalStatus status) {
+    switch (status) {
+      case MaintenanceApprovalStatus.pending:
+        return "Pending Review";
+      case MaintenanceApprovalStatus.approved:
+        return "Approved";
+      case MaintenanceApprovalStatus.rejected:
+        return "Rejected";
+    }
   }
 
   // ============================================================
@@ -873,6 +990,7 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
       selectedStatus = null;
       selectedPriority = null;
       selectedType = null;
+      selectedApprovalStatus = null;
     });
   }
 
@@ -901,7 +1019,8 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
     final hasFilters =
         selectedStatus != null ||
         selectedPriority != null ||
-        selectedType != null;
+        selectedType != null ||
+        selectedApprovalStatus != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -984,6 +1103,22 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
                   value: "$completedCount",
                   icon: Icons.check_circle_outline,
                   color: Colors.green,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // ==================================================
+            // SUMMARY ROW 3 - APPROVALS
+            // ==================================================
+            Row(
+              children: [
+                _buildSummaryCard(
+                  title: "Pending Approval",
+                  value: "$pendingApprovalCount",
+                  icon: Icons.pending_actions_rounded,
+                  color: Colors.orange,
                 ),
               ],
             ),
@@ -1189,6 +1324,10 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
                 setState(() {
                   _maintenanceItems.insert(0, newMaintenance);
                 });
+
+                MaintenanceAlertService.syncMaintenanceAlerts(
+                  _maintenanceItems,
+                );
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
