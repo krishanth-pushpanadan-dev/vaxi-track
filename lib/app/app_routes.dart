@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vaxi_track/features/user_management/data/user_management_service.dart';
 
 import '../features/splash/presentation/splash_page.dart';
 import '../features/authentication/presentation/login_page.dart';
@@ -29,7 +30,7 @@ import '../features/waste_management/presentation/waste_management_page.dart';
 
 import '../features/maintenance/presentation/maintenance_management_page.dart';
 import '../features/reports/presentation/reports_page.dart';
-// import '../features/user_management/presentation/user_management_page.dart';
+import '../features/user_management/presentation/user_management_page.dart';
 
 // If these pages already exist in your project, uncomment them:
 // import '../features/devices/presentation/add_device_page.dart';
@@ -157,9 +158,7 @@ class AppRoutes {
     // ----------------------------------------------------------
     // USER MANAGEMENT
     // ----------------------------------------------------------
-
-    // Enable when UserManagementPage is created.
-    // userManagement: (_) => const UserManagementPage(),
+    userManagement: (_) => const UserManagementPage(),
 
     // ----------------------------------------------------------
     // ADD / CREATE PAGES
