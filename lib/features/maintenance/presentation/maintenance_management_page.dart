@@ -455,6 +455,17 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
       _maintenanceItems[index] = updatedMaintenance;
     });
 
+    // Keep the shared in-memory source in sync so refreshes and returning
+    // to this page do not discard approval/status/assignment changes.
+    final sharedIndex = maintenanceList.indexWhere(
+      (maintenance) => maintenance.id == updatedMaintenance.id,
+    );
+    if (sharedIndex == -1) {
+      maintenanceList.insert(0, updatedMaintenance);
+    } else {
+      maintenanceList[sharedIndex] = updatedMaintenance;
+    }
+
     MaintenanceAlertService.syncMaintenanceAlerts(_maintenanceItems);
   }
 
@@ -1322,8 +1333,18 @@ class _MaintenanceManagementPageState extends State<MaintenanceManagementPage> {
                 }
 
                 setState(() {
+                  _maintenanceItems.removeWhere(
+                    (item) => item.id == newMaintenance.id,
+                  );
                   _maintenanceItems.insert(0, newMaintenance);
                 });
+
+                // Persist the new request in the shared in-memory source.
+                // This is still local-only; Firestore will replace this later.
+                maintenanceList.removeWhere(
+                  (item) => item.id == newMaintenance.id,
+                );
+                maintenanceList.insert(0, newMaintenance);
 
                 MaintenanceAlertService.syncMaintenanceAlerts(
                   _maintenanceItems,

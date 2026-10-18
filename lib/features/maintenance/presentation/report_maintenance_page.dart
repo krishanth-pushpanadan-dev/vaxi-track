@@ -198,7 +198,9 @@ class _ReportMaintenancePageState extends State<ReportMaintenancePage> {
           ? MaintenanceStatus.scheduled
           : MaintenanceStatus.pending,
 
-      approvalStatus: MaintenanceApprovalStatus.pending,
+      approvalStatus: requiresReview
+          ? MaintenanceApprovalStatus.pending
+          : MaintenanceApprovalStatus.approved,
       issueTitle: _issueTitleController.text.trim(),
       description: _descriptionController.text.trim(),
       reportedBy: user.name,

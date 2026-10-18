@@ -2,14 +2,21 @@ import '../../alerts/data/alert_dummy_data.dart';
 import '../../alerts/models/alert_model.dart';
 import '../model/maintenance_item_model.dart';
 
-/// Creates or updates in-memory alerts for maintenance issues.
+/// Creates and synchronizes in-memory alerts for maintenance issues.
 ///
-/// This service uses the same [alertList] displayed by the Alerts page.
-/// It does not persist alerts to Firebase yet.
+/// Alerts are shared with the Alerts page through [alertList]. This service
+/// does not persist data to Firebase yet.
 class MaintenanceAlertService {
   MaintenanceAlertService._();
 
   static const String _idPrefix = 'MNT-ALERT-';
+
+  /// Remembers the previous maintenance-trigger condition per item.
+  ///
+  /// This lets an alert reopen when an item transitions from not requiring an
+  /// alert to requiring one again, while avoiding reopening an alert that a
+  /// user manually resolved while the maintenance condition stayed unchanged.
+  static final Map<String, bool> _lastShouldBeActive = <String, bool>{};
 
   /// Synchronizes maintenance alerts without creating duplicate alerts.
   ///
@@ -22,6 +29,7 @@ class MaintenanceAlertService {
         (alert) => alert.id == alertId,
       );
       final shouldBeActive = _shouldHaveActiveAlert(item);
+      final wasPreviouslyTriggering = _lastShouldBeActive[item.id];
 
       if (!shouldBeActive) {
         if (existingIndex != -1) {
@@ -35,26 +43,38 @@ class MaintenanceAlertService {
             );
           }
         }
+        _lastShouldBeActive[item.id] = false;
         continue;
       }
 
-      final newAlert = _buildAlert(item);
+      final refreshedAlert = _buildAlert(item);
 
       if (existingIndex == -1) {
-        alertList.insert(0, newAlert);
+        alertList.insert(0, refreshedAlert);
       } else {
-        // Keep a previously acknowledged/resolved alert as-is to avoid
-        // repeatedly reopening the same issue every time the page is built.
-        // Refresh the text only while the alert remains active.
         final existing = alertList[existingIndex];
+
         if (existing.status == AlertStatus.active) {
+          // Refresh content without resetting acknowledgement or original time.
           alertList[existingIndex] = _copyAlert(
-            newAlert,
+            refreshedAlert,
             time: existing.time,
             acknowledged: existing.acknowledged,
           );
+        } else if (wasPreviouslyTriggering == false) {
+          // Reopen only when the maintenance condition became active again.
+          alertList[existingIndex] = _copyAlert(
+            refreshedAlert,
+            time: 'Updated just now',
+            acknowledged: false,
+            status: AlertStatus.active,
+          );
         }
+        // If the alert was resolved manually while the condition remained
+        // active, keep it resolved rather than reopening it on every refresh.
       }
+
+      _lastShouldBeActive[item.id] = true;
     }
   }
 

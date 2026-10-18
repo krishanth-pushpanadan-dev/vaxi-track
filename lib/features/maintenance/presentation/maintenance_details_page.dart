@@ -619,7 +619,8 @@ class _MaintenanceDetailsPageState extends State<MaintenanceDetailsPage> {
         children: [
           if (_maintenanceItem.approvalStatus ==
               MaintenanceApprovalStatus.approved) ...[
-            if (_maintenanceItem.status == MaintenanceStatus.pending)
+            if (_maintenanceItem.status == MaintenanceStatus.pending ||
+                _maintenanceItem.status == MaintenanceStatus.scheduled)
               _actionButton(
                 label: 'Start Maintenance',
                 icon: Icons.play_arrow_rounded,
