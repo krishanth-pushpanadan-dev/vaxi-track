@@ -28,7 +28,7 @@ import '../features/waste_management/presentation/waste_management_page.dart';
 // ============================================================
 
 import '../features/maintenance/presentation/maintenance_management_page.dart';
-// import '../features/reports/presentation/reports_page.dart';
+import '../features/reports/presentation/reports_page.dart';
 // import '../features/user_management/presentation/user_management_page.dart';
 
 // If these pages already exist in your project, uncomment them:
@@ -152,9 +152,7 @@ class AppRoutes {
     // ----------------------------------------------------------
     // REPORTS
     // ----------------------------------------------------------
-
-    // Enable when ReportsPage is created.
-    // reports: (_) => const ReportsPage(),
+    reports: (_) => const ReportsPage(),
 
     // ----------------------------------------------------------
     // USER MANAGEMENT
